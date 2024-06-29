@@ -33,7 +33,7 @@ if __name__ == '__main__': # This line is to break loops when multiprocessing
     # Initialise parameter object, see pipe_param.py for default parameters.
     # Here we have put the data from DACE in the "DATADIR/Kelt-11/101/"-
     # directory.
-    pps = PipeParam('hip67522','CHEOPS-products-20240322074703')
+    pps = PipeParam('hip67522','CHEOPS-products-20240622064513')
 
     # Set sub-array range to extract a light curve for only a fraction of the
     # full observation. Mostly used for testing with shorter execution time.
