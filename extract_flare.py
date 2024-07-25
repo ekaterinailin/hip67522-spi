@@ -1,3 +1,13 @@
+"""
+Python 3.11, UTF-8
+
+Extracts the flare light curve from a CHEOPS imagette light curve.
+Fits a flare model of choice and calculates the equivalent duration and bolometric flare energy.
+
+"""
+
+import os
+
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -19,7 +29,11 @@ from funcs.flares import flare_factor
 if __name__ == "__main__":
 
     # GET THE IMAGETTE LC -----------------------------------------------------------
-    file = "20240415114752"
+    
+    # read file string from command line
+    file = os.sys.argv[1]
+
+    # file = "20240415114752"
     IMG = f'../data/hip67522/CHEOPS-products-{file}/Outdata/00000/hip67522_CHEOPS-products-{file}_im.fits'
     hdulist = fits.open(IMG)
     print(f"Imagette file found for {file}:\n {IMG}\n")
@@ -61,7 +75,7 @@ if __name__ == "__main__":
     if ~np.isnan(ingress):
         mask = (f < 2.9e6) & (f > 2.43e6) & (t < ingress - 0.02) 
     elif ~np.isnan(egress):
-        mask = (f < 2.9e6) & (f > 2.43e6) & (t > egress + 0.2)
+        mask = (f < 2.9e6) & (f > 2.43e6) & (t > egress + 0.02)
 
     t = t[mask]
     f = f[mask]
@@ -518,7 +532,7 @@ if __name__ == "__main__":
         # init light curve for interpolation
         t_interpolate = np.linspace(t[flare_mask].min(), t[flare_mask].max(), 1000)
 
-        #f_interpolate = flare_fit_model(t_interpolate, t_peak, dur, ampl, t_peak2, dur2, ampl2)
+        f_interpolate = flare_fit_model(t_interpolate, t_peak, dur, ampl, t_peak2, dur2, ampl2) + newmed
 
         # get the equivalent durations, too
         eds = []
@@ -551,9 +565,9 @@ if __name__ == "__main__":
 
         plt.plot(t_interpolate, f_interpolate, color="red", lw=1, label="best-fit model")
 
-        plt.plot(t[flare_mask], f_flare-newmed, ".", markersize=1, color="black", label="de-trended flare light curve")
+        plt.plot(t[flare_mask], f_flare, ".", markersize=1, color="black", label="de-trended flare light curve")
         plt.xlim(t[flare_mask].min(), t[flare_mask].max())
-        plt.axhline(0, color="black", lw=1)
+        plt.axhline(newmed, color="black", lw=1)
         plt.xlabel("Time [BJD]")
         plt.ylabel("Flare flux [e-/s]")
 
@@ -578,75 +592,75 @@ if __name__ == "__main__":
         # ---------------------------------------------------------------------------------
 
 
-        # GET AND PLOT EQUIVALENT DURATIONS ------------------------------------------------
-        plt.figure(figsize=(6, 5))
-        plt.hist(eds, histtype="step", bins=50, color="black")
-        plt.xlabel("Equivalent Duration [s]")
-        plt.savefig(f"../plots/{file}/flares/hip67522_twoflare_model_posterior_ED.png")
+    # GET AND PLOT EQUIVALENT DURATIONS ------------------------------------------------
+    plt.figure(figsize=(6, 5))
+    plt.hist(eds, histtype="step", bins=50, color="black")
+    plt.xlabel("Equivalent Duration [s]")
+    plt.savefig(f"../plots/{file}/flares/hip67522_twoflare_model_posterior_ED.png")
 
-        ED = np.median(eds)
-        EDerr = np.std(eds)
+    ED = np.median(eds)
+    EDerr = np.std(eds)
 
-        print(f"Equivalent duration: {ED} +/- {EDerr}")
+    print(f"Equivalent duration: {ED} +/- {EDerr}")
 
-        # ---------------------------------------------------------------------------------
+    # ---------------------------------------------------------------------------------
 
 
-        # GET BOLOMETRIC FLARE ENERGY ------------------------------------------------------
+    # GET BOLOMETRIC FLARE ENERGY ------------------------------------------------------
+    
+    # read TESS response function
+    tess_resp = pd.read_csv("../data/tess-response-function-v2.0.csv", skiprows=7, names=["wav", "resp"], header=None)
+    wav, resp = tess_resp.wav.values, tess_resp.resp.values
+
+    # effective temperature of Scholz's star in K from Pecaut and Mamajek 2013
+    teff = 5650 # +- 75
+
+    # radius of Scholz's star in Solar radii from Pecaut and Mamajek 2013
+    radius = 1.392 # +- 0.05
+
+    print(f"Effective temperature: {teff:.0f} K")
+    print(fr"Radius: {radius:.3f} solar radii")
+
+    # calculate bolometric flare energy
+    print("\n We use an 10000K flare temperature, accounting for decreasing flare temperature with later spectral type.")
+    print("See Maas et al. (2022)")
+    bol_energy = flare_factor(teff, radius, wav, resp,  tflare=10000) * ED * u.s
+
+
+    print("\nBolometric flare energy in ergs:")
+    print(f"{bol_energy:.2e}")
+    
+    # ---------------------------------------------------------------------------------
+
+    # GET POSTERIOR DISTRIBUTION OF THE FLARE ENERGY ------------------------------------
+
+    # sample the posterior distribution of the flare energy using the MCMC samples on ED, and teff and radius with Gaussian errors
+    teff = np.random.normal(5650, 75, 500)
+    radius = np.random.normal(1.392, 0.05, 500)
+
+    # calculate the bolometric flare energy for each sample
+    bol_energies = flare_factor(teff.reshape((500,1)), radius.reshape((500,1)), wav, resp,  tflare=10000) * np.random.choice(eds, 500) * u.s
+
+    # calculate the mean and standard deviation of the bolometric flare energy
+    mean_bol_energy = np.mean(bol_energies)
+    std_bol_energy = np.std(bol_energies)
+
+    # plot the distribution of the bolometric flare energy
+    plt.figure(figsize=(6, 5))
+    plt.hist(bol_energies.value.flatten(), histtype="step", bins=50, color="black")
+    plt.xlabel("Bolometric Flare Energy [ergs]")
+    plt.savefig(f"../plots/{file}/flares/hip67522_twoflare_model_posterior_bolometric_energy.png")
+
+    # ---------------------------------------------------------------------------------
+
+    # WRITE THE RESULTS TO A CSV FILE ---------------------------------------------------
+    with open(f"../results/cheops_flares.csv", "a") as f:
+        # f.write("date,bol_energy,bol_energy_value,ED,EDerr,mean_bol_energy,std_bol_energy,egress,tmin,tmax,parametrization\n")
+        f.write(f"{file},{bol_energy:.2e},{bol_energy.value:.2e},{ED:.2e}," +
+                f"{EDerr:.2e},{mean_bol_energy},{std_bol_energy},{egress}," + 
+                f"{tmin},{tmax},{parametrization}\n")
         
-        # read TESS response function
-        tess_resp = pd.read_csv("../data/tess-response-function-v2.0.csv", skiprows=7, names=["wav", "resp"], header=None)
-        wav, resp = tess_resp.wav.values, tess_resp.resp.values
-
-        # effective temperature of Scholz's star in K from Pecaut and Mamajek 2013
-        teff = 5650 # +- 75
-
-        # radius of Scholz's star in Solar radii from Pecaut and Mamajek 2013
-        radius = 1.392 # +- 0.05
-
-        print(f"Effective temperature: {teff:.0f} K")
-        print(fr"Radius: {radius:.3f} solar radii")
-
-        # calculate bolometric flare energy
-        print("\n We use an 14000K flare temperature, accounting for decreasing flare temperature with later spectral type.")
-        print("See Maas et al. (2022)")
-        bol_energy = flare_factor(teff, radius, wav, resp,  tflare=10000) * ED * u.s
-
-
-        print("\nBolometric flare energy in ergs:")
-        print(f"{bol_energy:.2e}")
-       
-        # ---------------------------------------------------------------------------------
-
-        # GET POSTERIOR DISTRIBUTION OF THE FLARE ENERGY ------------------------------------
-
-        # sample the posterior distribution of the flare energy using the MCMC samples on ED, and teff and radius with Gaussian errors
-        teff = np.random.normal(5650, 75, 500)
-        radius = np.random.normal(1.392, 0.05, 500)
-
-        # calculate the bolometric flare energy for each sample
-        bol_energies = flare_factor(teff.reshape((500,1)), radius.reshape((500,1)), wav, resp,  tflare=10000) * np.random.choice(eds, 500) * u.s
-
-        # calculate the mean and standard deviation of the bolometric flare energy
-        mean_bol_energy = np.mean(bol_energies)
-        std_bol_energy = np.std(bol_energies)
-
-        # plot the distribution of the bolometric flare energy
-        plt.figure(figsize=(6, 5))
-        plt.hist(bol_energies.value.flatten(), histtype="step", bins=50, color="black")
-        plt.xlabel("Bolometric Flare Energy [ergs]")
-        plt.savefig(f"../plots/{file}/flares/hip67522_twoflare_model_posterior_bolometric_energy.png")
-
-        # ---------------------------------------------------------------------------------
-
-        # WRITE THE RESULTS TO A CSV FILE ---------------------------------------------------
-        with open(f"../results/cheops_flares.csv", "a") as f:
-            # f.write("date,bol_energy,bol_energy_value,ED,EDerr,mean_bol_energy,std_bol_energy,egress,tmin,tmax,parametrization\n")
-            f.write(f"{file},{bol_energy:.2e},{bol_energy.value:.2e},{ED:.2e}," +
-                    f"{EDerr:.2e},{mean_bol_energy},{std_bol_energy},{egress}," + 
-                    f"{tmin},{tmax},{parametrization}\n")
-            
-        # ---------------------------------------------------------------------------------
+    # ---------------------------------------------------------------------------------
 
 
 
