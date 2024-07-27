@@ -46,5 +46,7 @@ def flare_factor(teff, radius, wav, resp,  tflare=10000):
 
     factor = ratio * np.pi * (radius * u.R_sun) ** 2 * sigma_sb * (tflare * u.K)**4
 
+    # print(factor.to("erg/s"))   
+
     return factor.to("erg/s")
 
