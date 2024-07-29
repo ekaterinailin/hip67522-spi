@@ -213,6 +213,9 @@ def sample_AD_for_custom_distribution(f, nobs, N, savefig=False,
         samples[missing] = f(np.random.rand(*missing.shape))
     c = samples.reshape((N,nobs))
 
+    # save samples to file
+    np.save("samples.npy", c)
+
     # Make a figure of the sampled distribution
     fig = corner.corner(sampler.get_chain(discard=100, thin=15, flat=True))
     yt = list(plt.yticks()[0])
