@@ -26,6 +26,13 @@ used, so no need to derive new PSF models for every visit.
 """
 
 if __name__ == '__main__': # This line is to break loops when multiprocessing
+
+    # from pipe import conf
+
+    # conf.data_root = '/home/ilin/Documents/2024_03_HIP67522_CHEOPS/data'
+    # conf.ref_lib_data = '/home/ilin/Documents/2024_03_HIP67522_CHEOPS/data'
+
+
     # The pipe_param holds input parameters
     # pipe_control contains the high-level function that controls PIPE
     from pipe import PipeParam, PipeControl
@@ -33,7 +40,8 @@ if __name__ == '__main__': # This line is to break loops when multiprocessing
     # Initialise parameter object, see pipe_param.py for default parameters.
     # Here we have put the data from DACE in the "DATADIR/Kelt-11/101/"-
     # directory.
-    pps = PipeParam('hip67522','CHEOPS-products-20240622064513')
+    pps = PipeParam('hip67522','CHEOPS-products-visit_1001')
+    pps.remove_static = False # version 3 only
 
     # Set sub-array range to extract a light curve for only a fraction of the
     # full observation. Mostly used for testing with shorter execution time.
@@ -47,7 +55,6 @@ if __name__ == '__main__': # This line is to break loops when multiprocessing
     # is "eigenlib_815_281_70_0.pkl" where the last number is the running
     # number.
     pps.psflib = 0
-    pps.darksub = False
 
     pps.nthreads = 4
 
@@ -69,6 +76,12 @@ if __name__ == '__main__': # This line is to break loops when multiprocessing
     # varies with circumstances. Too few and the varying PSF is not fit. Too
     # many and noise is fitted. Rule of thumb: klip=1 to 5 for faint targets
     # without imagettes, klip=10 for bright targets.
+
+
+    # pps.fit_bgstars = False  # versions 2 and 3
+    pps.remove_satellites = True # versions 2 and 3
+    # pps.mask_bg_stars = True # versions 2 and 3
+
     pps.klip = 8
 
     pc.make_psf_lib()
