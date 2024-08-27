@@ -13,6 +13,7 @@ IO functions for CHEOPS data reduced with PIPE.
 
 import numpy as np
 from astropy.io import fits
+import matplotlib.pyplot as plt
 
 
 def extract(data, stri):
@@ -68,3 +69,26 @@ def read_lc_from_pipe(file, outdata="00000", path="../data/hip67522"):
     lc = {"t": t, "f": f, "ferr": ferr, "roll": roll, "dT": dT, "flag": flag, "bg": bg, "xc": xc, "yc": yc}
 
     return lc
+
+def get_residual_image(file, index=664, vmin=-600, vmax=6000):
+
+    IMG = f'../data/hip67522/CHEOPS-products-{file}/Outdata/00000/residuals_sa.fits'
+    hdulist = fits.open(IMG)
+    print(f"Residuals image file found for {file}:\n {IMG}\n")
+
+    # get the image data
+    image_data = hdulist[0].data
+    print(hdulist[0].header)
+
+    print(f"Image shape: {image_data.shape}")
+    # sum over the first axis
+    image_data = image_data[index:index+20].sum(axis=0)
+
+    # show the image
+    plt.imshow(image_data, cmap="viridis", origin="lower", vmin=vmin, vmax=vmax)
+    plt.colorbar(label=r"Flux [e$^{-}$/s]")
+
+    plt.xlabel("x pixel number")
+    plt.ylabel("y pixel number")
+
+    plt.tight_layout()

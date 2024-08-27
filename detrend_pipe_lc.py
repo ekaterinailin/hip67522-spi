@@ -6,13 +6,10 @@ import matplotlib.pyplot as plt
 
 from astropy.io import fits
 from scipy.optimize import curve_fit
+from scipy.signal import savgol_filter
 
+from funcs.pipe import get_residual_image
 
-from altaipony.flarelc import FlareLightCurve
-
-from astropy import units as u
-from astropy.modeling import models
-from astropy.constants import sigma_sb
 
 import batman
 
@@ -24,29 +21,6 @@ def extract(data, stri):
     """Quick function to extract light curve columns from a fits file"""
     return data[stri].byteswap().newbyteorder()
 
-
-
-def get_residual_image(file, index=664):
-    IMG = f'../data/hip67522/CHEOPS-products-{file}/Outdata/00000/residuals_sa.fits'
-    hdulist = fits.open(IMG)
-    print(f"Residuals image file found for {file}:\n {IMG}\n")
-
-    # get the image data
-    image_data = hdulist[0].data
-
-
-    # sum over the first axis
-    image_data = image_data[index:index+20].sum(axis=0)
-
-    # show the image
-    plt.imshow(image_data, cmap="viridis", origin="lower", vmin=-600, vmax=6000)
-    plt.colorbar(label=flux_label)
-
-    plt.xlabel("x pixel number")
-    plt.ylabel("y pixel number")
-
-    plt.tight_layout()
-    plt.savefig(f"../plots/{file}/random_residuals_sa.png")
 
 def metafunc(offset2, transit):
     """Defines a polynomial function with a time offset and a known transit included.
@@ -99,11 +73,11 @@ if __name__ == '__main__':
     assert np.diff(t).min() * 24 * 60 * 60 < 10.05, "Time series is not 10s cadence"
 
     # initial mask
-    mask = (f < 2.96e6) & (f > 2.3e6) & (flag==0)
-    print(f"Initial mask: {mask.sum()} data points")
+    init_mask = (f < 2.96e6) & (f > 2.3e6) & (flag==0)
+    print(f"Initial mask: {init_mask.sum()} data points")
 
     # apply the mask
-    t, f, ferr, roll, dT, flag, bg, xc, yc = [arr[mask] for arr in [t, f, ferr, roll, dT, flag, bg, xc, yc]]
+    t, f, ferr, roll, dT, flag, bg, xc, yc = [arr[init_mask] for arr in [t, f, ferr, roll, dT, flag, bg, xc, yc]]
 
     # make a diagnostic plot of the residuals on the detector 
     get_residual_image(file, index=664)
@@ -186,12 +160,12 @@ if __name__ == '__main__':
     # MASK OUTLIERS ----------------------------------------------------------------
 
     # mask out the outliers
-    mask = (f_sub < newmed + 4 * np.std(f_sub)) & (f_sub > newmed - 4 * np.std(f_sub))
+    outlier_mask = (f_sub < newmed + 4 * np.std(f_sub)) & (f_sub > newmed - 4 * np.std(f_sub))
 
     plt.figure(figsize=(10, 5))
     plt.plot(t, f, ".", markersize=1)
-    plt.plot(t[mask], f_sub[mask], ".", markersize=1)
-    plt.plot(t[~mask], f_sub[~mask], ".", markersize=6, color="red")
+    plt.plot(t[outlier_mask], f_sub[outlier_mask], ".", markersize=1)
+    plt.plot(t[~outlier_mask], f_sub[~outlier_mask], ".", markersize=6, color="red")
     plt.axhline(med, color="red", lw=1)
 
     plt.xlabel(time_label)
@@ -203,19 +177,19 @@ if __name__ == '__main__':
 
 
     # UPDATE TRANSIT MODEL WITH SUBTRACTED LIGHT CURVE -----------------------------
-    m = batman.TransitModel(params, t[mask])    #initializes model
+    m = batman.TransitModel(params, t[outlier_mask])    #initializes model
     transit = m.light_curve(params)          #calculates light curve
 
-    transit = (transit - 1) * np.median(f_sub[mask])
+    transit = (transit - 1) * np.median(f_sub[outlier_mask])
 
 
     # FIT A SECOND POLYNOMIAL MODEL ------------------------------------------------
 
     # define a new model function with the new transit model
-    newmodelfunc = metafunc(t[mask][-1], transit)
+    newmodelfunc = metafunc(t[outlier_mask][-1], transit)
 
     # fit the new model to the subtracted light curve
-    popt, pcov = curve_fit(newmodelfunc, t[mask], f[mask], p0=popt)
+    popt, pcov = curve_fit(newmodelfunc, t[outlier_mask], f[outlier_mask], p0=popt)
 
     # get the new fitted model but use the full array
     newfitted = modelfunc(t, *popt)
@@ -257,6 +231,38 @@ if __name__ == '__main__':
 
     # --------------------------------------------------------------------------------
 
+
+    # SMOOTH THE RESIDUALS WITH A SAVITZKY-GOLAY FILTER -----------------------------
+
+    # smooth the light curve
+    smoothed = savgol_filter(newf_sub, len(newf_sub)//5, 3)
+
+    # PLOT THE SMOOTHED LIGHT CURVE -------------------------------------------------
+
+    plt.figure(figsize=(10, 5))
+    plt.plot(t, newf_sub, ".", markersize=1, color="grey")
+    plt.plot(t, smoothed, ".",  color="black")
+    plt.xlabel(time_label)
+    plt.ylabel(flux_label)
+
+    plt.title("Savitzky-Golay smoothed light curve")
+    plt.savefig(f"../plots/{file}/flares/hip67522_savgol_model.png")
+
+    # --------------------------------------------------------------------------------
+
+    newf_sub = newf_sub - smoothed + np.median(newf_sub)
+
+    # PLOT THE SAVGOL DE-TRENDED LIGHT CURVE ----------------------------------------------------
+
+    plt.figure(figsize=(10, 5))
+    plt.plot(t, newf_sub, ".", markersize=1, color="grey")
+    plt.xlabel(time_label)
+    plt.ylabel(flux_label)
+    plt.title("Savitzky-Golay de-trended light curve")
+    plt.savefig(f"../plots/{file}/flares/hip67522_savgol_detrended_lc.png")
+
+    # --------------------------------------------------------------------------------
+
     # ROLL ANGLE CORRECTION ---------------------------------------------------------
 
     # approximate the flux at the roll values in the flare region with 
@@ -293,5 +299,9 @@ if __name__ == '__main__':
     # WRITE THE FINAL LIGHT CURVE TO A CSV FILE ------------------------------------------
 
     df = pd.DataFrame({"time": t, "flux": ff, "flux_err": ferr, "roll": roll, "dT": dT, "flag": flag, "bg": bg, "xc": xc, "yc": yc})
-    df.to_csv(f"../data/hip67522/CHEOPS-products-{file}/Outdata/00000/{file}_detrended_lc.csv")
+    df.to_csv(f"../data/hip67522/CHEOPS-products-{file}/Outdata/00000/{file}_detrended_lc.csv", index=False)
+
+    # WRITE THE INITAL MASK TO A txt FILE ------------------------------------------
+
+    np.savetxt(f"../data/hip67522/CHEOPS-products-{file}/Outdata/00000/{file}_mask.txt", init_mask, fmt="%d")
 
