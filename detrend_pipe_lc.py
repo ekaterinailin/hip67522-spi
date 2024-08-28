@@ -8,7 +8,7 @@ from astropy.io import fits
 from scipy.optimize import curve_fit
 from scipy.signal import savgol_filter
 
-from funcs.pipe import get_residual_image
+from funcs.pipe import get_residual_image, extract
 
 
 import batman
@@ -17,9 +17,7 @@ import batman
 flux_label = r"Flux [e$^{-}$/s]"
 time_label = "Time [BJD]"
 
-def extract(data, stri):
-    """Quick function to extract light curve columns from a fits file"""
-    return data[stri].byteswap().newbyteorder()
+
 
 
 def metafunc(offset2, transit):
@@ -75,6 +73,25 @@ if __name__ == '__main__':
     # initial mask
     init_mask = (f < 2.96e6) & (f > 2.3e6) & (flag==0)
     print(f"Initial mask: {init_mask.sum()} data points")
+
+
+    # GET THE KNOWN FLARES --------------------------------------------------------
+
+    flares = pd.read_csv(f"../results/cheops_flares.csv")
+
+    # convert flares["date"] to string
+    flares["date"] = flares["date"].astype(str)
+
+    # if file is in the date of flares add it to the initial mask
+    if str(file) in flares["date"].values:
+        flare = flares[flares["date"] == file]
+        flare_mask = (t > flare["tmin"].values[0]) & (t < flare["tmax"].values[0])
+        print(f"Flare mask: {flare_mask.sum()} data points")
+        init_mask = init_mask & ~flare_mask
+
+    print(f"Masking flares: {init_mask.sum()} data points")
+
+
 
     # apply the mask
     t, f, ferr, roll, dT, flag, bg, xc, yc = [arr[init_mask] for arr in [t, f, ferr, roll, dT, flag, bg, xc, yc]]
@@ -281,6 +298,19 @@ if __name__ == '__main__':
     # final flux 
     ff = newf_sub - f_sub_no_flare_approx + newmed
 
+    # APPEND FLARES TO THE FINAL LIGHT CURVE -----------------------------------------
+    
+    if str(file) in flares["date"].values:
+        notransitmodelfunc = metafunc(t[outlier_mask][-1], 0)
+        flarelc = pd.read_csv(f"../results/hip67522_flare_lc_{file}.csv")
+        ff = np.append(ff, flarelc["f"].values + newmed)
+        t = np.append(t, flarelc["t"].values)
+        
+        newfitted = np.append(newfitted, notransitmodelfunc(flarelc["t"].values, *popt))
+
+    # sort t, ff, and newfitted by t
+    t, ff, newfitted = [arr[np.argsort(t)] for arr in [t, ff, newfitted]]
+
 
     # PLOT THE FINAL FLUX  ----------------------------------------------------------
 
@@ -290,7 +320,7 @@ if __name__ == '__main__':
 
     plt.xlabel(time_label)
     plt.ylabel(flux_label)
-    plt.title("Final de-trendend ligh curve")
+    plt.title("Final de-trendend light curve")
     plt.savefig(f"../plots/{file}/flares/hip67522_final_detrended_light_curve.png")
 
     # --------------------------------------------------------------------------------
@@ -298,7 +328,7 @@ if __name__ == '__main__':
 
     # WRITE THE FINAL LIGHT CURVE TO A CSV FILE ------------------------------------------
 
-    df = pd.DataFrame({"time": t, "flux": ff, "flux_err": ferr, "roll": roll, "dT": dT, "flag": flag, "bg": bg, "xc": xc, "yc": yc})
+    df = pd.DataFrame({"time": t, "flux": ff, "model" : newfitted,})# "flux_err": ferr, "roll": roll, "dT": dT, "flag": flag, "bg": bg, "xc": xc, "yc": yc})
     df.to_csv(f"../data/hip67522/CHEOPS-products-{file}/Outdata/00000/{file}_detrended_lc.csv", index=False)
 
     # WRITE THE INITAL MASK TO A txt FILE ------------------------------------------

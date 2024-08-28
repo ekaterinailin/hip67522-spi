@@ -290,6 +290,12 @@ if __name__ == "__main__":
     # subtract the quiescent model from the flare region and add the median
     f_flare = f_sub_flare - f_sub_flare_approx + newmed
 
+
+    # WRITE THE FLARE LIGHT CURVE TO A CSV FILE ------------------------------------------------
+
+    flarelc = pd.DataFrame({"t": t[flare_mask], "f": f_flare - newmed, "ferr": ferr[flare_mask]})
+    flarelc.to_csv(f"../results/hip67522_flare_lc_{file}.csv", index=False)
+
     # PLOT THE FLARE LIGHT CURVE --------------------------------------------------------------
 
     plt.figure(figsize=(10, 5))

@@ -92,3 +92,8 @@ def get_residual_image(file, index=664, vmin=-600, vmax=6000):
     plt.ylabel("y pixel number")
 
     plt.tight_layout()
+
+
+def extract(data, stri):
+    """Quick function to extract light curve columns from a fits file"""
+    return data[stri].byteswap().newbyteorder()
