@@ -299,12 +299,20 @@ if __name__ == '__main__':
     ff = newf_sub - f_sub_no_flare_approx + newmed
 
     # APPEND FLARES TO THE FINAL LIGHT CURVE -----------------------------------------
-    
+
     if str(file) in flares["date"].values:
         notransitmodelfunc = metafunc(t[outlier_mask][-1], 0)
         flarelc = pd.read_csv(f"../results/hip67522_flare_lc_{file}.csv")
         ff = np.append(ff, flarelc["f"].values + newmed)
         t = np.append(t, flarelc["t"].values)
+        bg = np.append(bg, extract(image_data, "BG")[flare_mask])
+        xc = np.append(xc, extract(image_data, "XC")[flare_mask])
+        yc = np.append(yc, extract(image_data, "YC")[flare_mask])
+        flag = np.append(flag, extract(image_data, "FLAG")[flare_mask])
+        roll = np.append(roll, extract(image_data, "ROLL")[flare_mask])
+        dT = np.append(dT, extract(image_data, "thermFront_2")[flare_mask])
+        ferr = np.append(ferr, extract(image_data, "FLUXERR")[flare_mask])
+
         
         newfitted = np.append(newfitted, notransitmodelfunc(flarelc["t"].values, *popt))
 
@@ -328,7 +336,7 @@ if __name__ == '__main__':
 
     # WRITE THE FINAL LIGHT CURVE TO A CSV FILE ------------------------------------------
 
-    df = pd.DataFrame({"time": t, "flux": ff, "model" : newfitted,})# "flux_err": ferr, "roll": roll, "dT": dT, "flag": flag, "bg": bg, "xc": xc, "yc": yc})
+    df = pd.DataFrame({"time": t, "flux": ff, "model" : newfitted, "flux_err": ferr, "roll": roll, "dT": dT, "flag": flag, "bg": bg, "xc": xc, "yc": yc})
     df.to_csv(f"../data/hip67522/CHEOPS-products-{file}/Outdata/00000/{file}_detrended_lc.csv", index=False)
 
     # WRITE THE INITAL MASK TO A txt FILE ------------------------------------------
