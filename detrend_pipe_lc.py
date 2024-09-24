@@ -53,6 +53,15 @@ if __name__ == '__main__':
 
     # file name
     IMG = f'../data/hip67522/CHEOPS-products-{file}/Outdata/00000/hip67522_CHEOPS-products-{file}_im.fits'
+    
+    # new PIPE resulst
+    IMG = f'../data/hip67522/pipe_HIP67522/HIP67522_{file}_im.fits'
+
+    # make a folder in the plots directory for each file
+    import os
+    if not os.path.exists(f"../plots/{file}/flares"):
+        os.makedirs(f"../plots/{file}/flares")
+
 
     # open the fits file
     hdulist = fits.open(IMG)
@@ -80,11 +89,19 @@ if __name__ == '__main__':
     flares = pd.read_csv(f"../results/cheops_flares.csv")
 
     # convert flares["date"] to string
-    flares["date"] = flares["date"].astype(str)
+    # flares["date"] = flares["date"].astype(str)
+    flares["newpipe"] = flares["newpipe"].astype(str)
 
     # if file is in the date of flares add it to the initial mask
-    if str(file) in flares["date"].values:
-        flare = flares[flares["date"] == file]
+    # if str(file) in flares["date"].values:
+    #     flare = flares[flares["date"] == file]
+    #     flare_mask = (t > flare["tmin"].values[0]) & (t < flare["tmax"].values[0])
+    #     print(f"Flare mask: {flare_mask.sum()} data points")
+    #     init_mask = init_mask & ~flare_mask
+
+    if str(file) in flares["newpipe"].values:
+        print(file)
+        flare = flares[flares["newpipe"] == file]
         flare_mask = (t > flare["tmin"].values[0]) & (t < flare["tmax"].values[0])
         print(f"Flare mask: {flare_mask.sum()} data points")
         init_mask = init_mask & ~flare_mask
@@ -97,7 +114,7 @@ if __name__ == '__main__':
     t, f, ferr, roll, dT, flag, bg, xc, yc = [arr[init_mask] for arr in [t, f, ferr, roll, dT, flag, bg, xc, yc]]
 
     # make a diagnostic plot of the residuals on the detector 
-    get_residual_image(file, index=664)
+    # get_residual_image(file, index=664)
 
     # PLOT THE INITIAL LIGHT CURVE -------------------------------------------------
 
@@ -298,9 +315,11 @@ if __name__ == '__main__':
     # final flux 
     ff = newf_sub - f_sub_no_flare_approx + newmed
 
-    # APPEND FLARES TO THE FINAL LIGHT CURVE -----------------------------------------
+    # REINTRODUCE FLARES TO THE FINAL LIGHT CURVE -----------------------------------------
 
-    if str(file) in flares["date"].values:
+    # if str(file) in flares["date"].values:
+    if str(file) in flares["newpipe"].values:
+        
         notransitmodelfunc = metafunc(t[outlier_mask][-1], 0)
         flarelc = pd.read_csv(f"../results/hip67522_flare_lc_{file}.csv")
         ff = np.append(ff, flarelc["f"].values + newmed)
@@ -336,10 +355,15 @@ if __name__ == '__main__':
 
     # WRITE THE FINAL LIGHT CURVE TO A CSV FILE ------------------------------------------
 
-    df = pd.DataFrame({"time": t, "flux": ff, "model" : newfitted, "flux_err": ferr, "roll": roll, "dT": dT, "flag": flag, "bg": bg, "xc": xc, "yc": yc})
-    df.to_csv(f"../data/hip67522/CHEOPS-products-{file}/Outdata/00000/{file}_detrended_lc.csv", index=False)
+    df = pd.DataFrame({"time": t, "flux": ff, "model" : newfitted, "flux_err": ferr,
+                       "roll": roll, "dT": dT, "flag": flag, "bg": bg, "xc": xc, "yc": yc})
+    
+    # df.to_csv(f"../data/hip67522/CHEOPS-products-{file}/Outdata/00000/{file}_detrended_lc.csv", index=False)
+
+    # new PIPE
+    df.to_csv(f"../data/hip67522/pipe_HIP67522/HIP67522_{file}_detrended_lc.csv", index=False)
 
     # WRITE THE INITAL MASK TO A txt FILE ------------------------------------------
 
-    np.savetxt(f"../data/hip67522/CHEOPS-products-{file}/Outdata/00000/{file}_mask.txt", init_mask, fmt="%d")
-
+    # np.savetxt(f"../data/hip67522/CHEOPS-products-{file}/Outdata/00000/{file}_mask.txt", init_mask, fmt="%d")
+    np.savetxt(f"../data/hip67522/pipe_HIP67522/HIP67522_{file}_mask.txt", init_mask, fmt="%d")

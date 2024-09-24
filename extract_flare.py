@@ -35,6 +35,7 @@ if __name__ == "__main__":
 
     # file = "20240415114752"
     IMG = f'../data/hip67522/CHEOPS-products-{file}/Outdata/00000/hip67522_CHEOPS-products-{file}_im.fits'
+    IMG = f'../data/hip67522/pipe_HIP67522/HIP67522_{file}_im.fits'
     hdulist = fits.open(IMG)
     print(f"Imagette file found for {file}:\n {IMG}\n")
 
@@ -42,7 +43,7 @@ if __name__ == "__main__":
     image_data = hdulist[1].data
 
     # get the time, flux, flux error, and roll angle
-    t, f, ferr, roll = image_data["BJD_TIME"], image_data["FLUX"], image_data["FLUXERR"], image_data["ROLL"]
+    t, f, ferr, roll, flag = image_data["BJD_TIME"], image_data["FLUX"], image_data["FLUXERR"], image_data["ROLL"], image_data["FLAG"]
 
     # make sure the data is in fact 10s cadence
     assert np.diff(t).min() * 24 * 60 * 60 < 10.05, "Time series is not 10s cadence"
@@ -52,6 +53,16 @@ if __name__ == "__main__":
     f = f.byteswap().newbyteorder()
     ferr = ferr.byteswap().newbyteorder()
     roll = roll.byteswap().newbyteorder()
+    flag = flag.byteswap().newbyteorder()
+
+    # keep only flag==0
+    mask = flag == 0
+    t = t[mask]
+    f = f[mask]
+    ferr = ferr[mask]
+    roll = roll[mask]
+
+
     # ----------------------------------------------------------------------------------------
 
     # READ THE MODEL PARAMETERS --------------------------------------------------------------
