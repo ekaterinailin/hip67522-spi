@@ -1,3 +1,11 @@
+# -*- coding: utf-8 -*-
+"""
+@author: Ekaterina Ilin, 2024, ilin@astron.nl
+
+This script is used to detrend the light curves after 
+the imagette data cubes have been reduced with PIPE.
+"""
+
 import sys
 
 import numpy as np
