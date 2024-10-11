@@ -82,6 +82,8 @@ if __name__ == '__main__':
     t, f, ferr, roll, dT, flag, bg, xc, yc = [extract(image_data, stri) for stri in ["BJD_TIME", "FLUX", "FLUXERR",
                                                                                     "ROLL", "thermFront_2", "FLAG",
                                                                                     "BG", "XC", "YC"]]
+    
+    raw_f = f.copy()
 
     # make sure the data is in fact 10s cadence
     assert np.diff(t).min() * 24 * 60 * 60 < 10.05, "Time series is not 10s cadence"
@@ -349,24 +351,56 @@ if __name__ == '__main__':
             f_sub_flare_approx[i] = np.median(newf_sub[idx])
 
         # subtract the flare model and roll angle correction
-        ff = np.append(ff, fflare + 2 * newmed - f_sub_flare_approx -notransitmodelfunc(tflare, *popt))
+        ff = np.append(ff[outlier_mask], fflare + 2 * newmed - f_sub_flare_approx -notransitmodelfunc(tflare, *popt))
 
-        t = np.append(t, tflare)
-        bg = np.append(bg, bgflare)
-        xc = np.append(xc, xcflare)
-        yc = np.append(yc, ycflare)
-        # flag = np.append(flag, flagflare)
-        dT = np.append(dT, dTflare)
-        roll = np.append(roll, rollflare)
-        ferr = np.append(ferr, ferrflare)
+        t = np.append(t[outlier_mask], tflare)
+        bg = np.append(bg[outlier_mask], bgflare)
+        xc = np.append(xc[outlier_mask], xcflare)
+        yc = np.append(yc[outlier_mask], ycflare)
+        dT = np.append(dT[outlier_mask], dTflare)
+        roll = np.append(roll[outlier_mask], rollflare)
+        ferr = np.append(ferr[outlier_mask], ferrflare)
         
-        newfitted = np.append(newfitted, notransitmodelfunc(tflare, *popt))
+        newfitted = np.append(newfitted[outlier_mask], notransitmodelfunc(tflare, *popt))
 
         # add a mask for the flare region
         flag = np.append(flag, np.ones_like(fflare))
 
+        # make a raw flux with the flare
+        raw_f = np.append(raw_f[fullinit_mask][outlier_mask], fflare)
+    
+    else:
+        t = t[outlier_mask]
+        newfitted = newfitted[outlier_mask]
+        ff = ff[outlier_mask]
+        bg = bg[outlier_mask]
+        xc = xc[outlier_mask]
+        yc = yc[outlier_mask]
+        dT = dT[outlier_mask]
+        roll = roll[outlier_mask]
+        ferr = ferr[outlier_mask]
+        flag = flag[outlier_mask]
+
+
+        raw_f = raw_f[fullinit_mask][outlier_mask]
+
+    #Print all array shapes
+    print("Final array shapes:")
+    print("Time: ", t.shape)
+    print("Flux: ", ff.shape)
+    print("Model: ", newfitted.shape)
+    print("Flux error: ", ferr.shape)
+    print("Roll: ", roll.shape)
+    print("dT: ", dT.shape)
+    print("Flag: ", flag.shape)
+    print("Background: ", bg.shape)
+    print("Xc: ", xc.shape)
+    print("Yc: ", yc.shape)
+    print("Raw flux: ", raw_f.shape)
+
+
     # sort all arrays by time
-    t, ff, newfitted, ferr, roll, dT, flag, bg, xc, yc = [arr[np.argsort(t)] for arr in [t, ff, newfitted, ferr, roll, dT, flag, bg, xc, yc]]
+    t, ff, newfitted, ferr, roll, dT, flag, bg, xc, yc, raw_f = [arr[np.argsort(t)] for arr in [t, ff, newfitted, ferr, roll, dT, flag, bg, xc, yc, raw_f]]
 
 
     # PLOT THE FINAL FLUX  ----------------------------------------------------------
@@ -386,8 +420,8 @@ if __name__ == '__main__':
 
 
     # WRITE THE FINAL LIGHT CURVE TO A CSV FILE ------------------------------------------
-
-    df = pd.DataFrame({"time": t, "flux": ff, "model" : newfitted, "flux_err": ferr,
+    
+    df = pd.DataFrame({"time": t, "flux": ff, "model" : newfitted, "flux_err": ferr, "masked_raw_flux": raw_f,
                        "roll": roll, "dT": dT, "flag": flag, "bg": bg, "xc": xc, "yc": yc})
 
     # new PIPE
