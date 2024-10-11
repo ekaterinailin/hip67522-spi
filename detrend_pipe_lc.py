@@ -8,10 +8,17 @@ from astropy.io import fits
 from scipy.optimize import curve_fit
 from scipy.signal import savgol_filter
 
-from funcs.pipe import get_residual_image, extract
-
+from funcs.pipe import extract
 
 import batman
+
+# ignore warnings
+import warnings
+warnings.filterwarnings("ignore")
+
+# capture the screen output to file
+import sys
+
 
 
 flux_label = r"Flux [e$^{-}$/s]"
@@ -49,23 +56,23 @@ def metafunc(offset2, transit):
 if __name__ == '__main__':
 
     # GET THE IMAGE DATA -----------------------------------------------------------
-    file = sys.argv[1]
+    pi = sys.argv[1]
+    file = sys.argv[2]
 
-    # file name
-    IMG = f'../data/hip67522/CHEOPS-products-{file}/Outdata/00000/hip67522_CHEOPS-products-{file}_im.fits'
-    
+    sys.stdout = open(f"../plots/{file}{pi}/detrending.log", "w")
+
     # new PIPE resulst
-    IMG = f'../data/hip67522/pipe_HIP67522/HIP67522_{file}_im.fits'
+    IMG = f'../data/hip67522/pipe_HIP67522/HIP67522{pi}_{file}_im.fits'
 
     # make a folder in the plots directory for each file
     import os
-    if not os.path.exists(f"../plots/{file}/flares"):
-        os.makedirs(f"../plots/{file}/flares")
+    if not os.path.exists(f"../plots/{file}{pi}/flares"):
+        os.makedirs(f"../plots/{file}{pi}/flares")
 
 
     # open the fits file
     hdulist = fits.open(IMG)
-    print(f"Imagette file found for {file}:\n {IMG}\n")
+    print(f"Imagette file found for {file}{pi}:\n {IMG}\n")
 
     # get the image data
     image_data = hdulist[1].data
@@ -81,7 +88,7 @@ if __name__ == '__main__':
 
     # initial mask
     init_mask = (f < 2.96e6) & (f > 2.3e6) & (flag==0)
-    print(f"Initial mask: {init_mask.sum()} data points")
+    print(f"Initial mask: {np.where(~init_mask)[0].shape[0]} data points")
 
 
     # GET THE KNOWN FLARES --------------------------------------------------------
@@ -92,26 +99,26 @@ if __name__ == '__main__':
     # flares["date"] = flares["date"].astype(str)
     flares["newpipe"] = flares["newpipe"].astype(str)
 
-    # if file is in the date of flares add it to the initial mask
-    # if str(file) in flares["date"].values:
-    #     flare = flares[flares["date"] == file]
-    #     flare_mask = (t > flare["tmin"].values[0]) & (t < flare["tmax"].values[0])
-    #     print(f"Flare mask: {flare_mask.sum()} data points")
-    #     init_mask = init_mask & ~flare_mask
-
-    if str(file) in flares["newpipe"].values:
-        print(file)
-        flare = flares[flares["newpipe"] == file]
+    name = f"{file}{pi}"
+    if str(name) in flares["newpipe"].values:
+        print(name)
+        flare = flares[flares["newpipe"] == name]
         flare_mask = (t > flare["tmin"].values[0]) & (t < flare["tmax"].values[0])
-        print(f"Flare mask: {flare_mask.sum()} data points")
-        init_mask = init_mask & ~flare_mask
+        print(f"Flare mask: {np.where(flare_mask)[0].shape[0]} data points")
+        fullinit_mask = init_mask & ~flare_mask
 
-    print(f"Masking flares: {init_mask.sum()} data points")
+        # define the flare light curve
+        tflare, fflare, ferrflare, rollflare, dTflare, flagflare, bgflare, xcflare, ycflare = [arr[flare_mask & init_mask] for arr in 
+                                                                                           [t, f, ferr, roll, dT, flag, bg, xc, yc]]
 
 
+        print(f"Masking flares: {np.where(flare_mask)[0].shape[0]} data points")
+
+    else:
+        fullinit_mask = init_mask
 
     # apply the mask
-    t, f, ferr, roll, dT, flag, bg, xc, yc = [arr[init_mask] for arr in [t, f, ferr, roll, dT, flag, bg, xc, yc]]
+    t, f, ferr, roll, dT, flag, bg, xc, yc = [arr[fullinit_mask] for arr in [t, f, ferr, roll, dT, flag, bg, xc, yc]]
 
     # make a diagnostic plot of the residuals on the detector 
     # get_residual_image(file, index=664)
@@ -124,7 +131,7 @@ if __name__ == '__main__':
     plt.xlabel(time_label)
     plt.ylabel(flux_label)
     plt.title("Initial light curve, masking outliers")
-    plt.savefig(f"../plots/{file}/flares/hip67522_initial_lc.png")
+    plt.savefig(f"../plots/{file}{pi}/flares/hip67522_initial_lc.png")
 
     # -----------------------------------------------------------------------------
 
@@ -144,6 +151,10 @@ if __name__ == '__main__':
     params.u = [0.22, 0.27]                #limb darkening coefficients [u1, u2]
     params.limb_dark = "quadratic"       #limb darkening model
 
+    # print the parameters
+    print("Batman transit parameters from Barber et al. 2024:")
+    print(vars(params))
+
     m = batman.TransitModel(params, t)    #initializes model
     transit = m.light_curve(params)          #calculates light curve
 
@@ -159,6 +170,9 @@ if __name__ == '__main__':
     # fit the model to the light curve
     popt, pcov = curve_fit(modelfunc, t, f, p0=[-1.45888787e+04, -1.41685433e+08, -1.03596058e+09,  1.00000000e+00,
             1.19292031e-02, -2.42900480e-09,  8.42088604e-01])
+    
+    # print the fitted parameters
+    print("Fitted parameters for the first iteration: ", popt)
 
     # get the fitted model
     fitted = modelfunc(t, *popt)
@@ -175,7 +189,7 @@ if __name__ == '__main__':
     plt.xlabel(time_label)
     plt.ylabel(flux_label)
     plt.title("First polynomial fit to the light curve w/o flare")
-    plt.savefig(f"../plots/{file}/flares/hip67522_polyfit_init.png")
+    plt.savefig(f"../plots/{file}{pi}/flares/hip67522_polyfit_init.png")
 
     # -----------------------------------------------------------------------------
 
@@ -196,6 +210,8 @@ if __name__ == '__main__':
     # mask out the outliers
     outlier_mask = (f_sub < newmed + 4 * np.std(f_sub)) & (f_sub > newmed - 4 * np.std(f_sub))
 
+    print(f"Masking outliers: {np.where(~outlier_mask)[0].shape[0]} data points")
+
     plt.figure(figsize=(10, 5))
     plt.plot(t, f, ".", markersize=1)
     plt.plot(t[outlier_mask], f_sub[outlier_mask], ".", markersize=1)
@@ -205,7 +221,7 @@ if __name__ == '__main__':
     plt.xlabel(time_label)
     plt.ylabel(flux_label)
     plt.title("Subtracting the polynomial fit and masking outliers")
-    plt.savefig(f"../plots/{file}/flares/hip67522_subtract_polyfit_init.png")
+    plt.savefig(f"../plots/{file}{pi}/flares/hip67522_subtract_polyfit_init.png")
 
     # -----------------------------------------------------------------------------
 
@@ -225,6 +241,9 @@ if __name__ == '__main__':
     # fit the new model to the subtracted light curve
     popt, pcov = curve_fit(newmodelfunc, t[outlier_mask], f[outlier_mask], p0=popt)
 
+    # print the fitted parameters
+    print("Fitted parameters for the second iteration: ", popt)
+
     # get the new fitted model but use the full array
     newfitted = modelfunc(t, *popt)
 
@@ -239,7 +258,7 @@ if __name__ == '__main__':
     plt.xlabel(time_label)
     plt.ylabel(flux_label)
     plt.title("Difference between first and second polynomial fit")
-    plt.savefig(f"../plots/{file}/flares/hip67522_polyfit_diff.png")
+    plt.savefig(f"../plots/{file}{pi}/flares/hip67522_polyfit_diff.png")
 
     # --------------------------------------------------------------------------------
 
@@ -252,7 +271,7 @@ if __name__ == '__main__':
     plt.xlabel(time_label)
     plt.ylabel(flux_label)
     plt.title("Second polynomial fit to the light curve w/o flare")
-    plt.savefig(f"../plots/{file}/flares/hip67522_polyfit_final.png")
+    plt.savefig(f"../plots/{file}{pi}/flares/hip67522_polyfit_final.png")
 
     # --------------------------------------------------------------------------------
 
@@ -261,7 +280,7 @@ if __name__ == '__main__':
     plt.plot(roll, newf_sub, ".", markersize=1)
     plt.xlabel("Roll")
     plt.ylabel(flux_label)
-    plt.savefig(f"../plots/{file}/flares/hip67522_roll_flux.png")
+    plt.savefig(f"../plots/{file}{pi}/flares/hip67522_roll_flux.png")
 
     # --------------------------------------------------------------------------------
 
@@ -280,7 +299,7 @@ if __name__ == '__main__':
     plt.ylabel(flux_label)
 
     plt.title("Savitzky-Golay smoothed light curve")
-    plt.savefig(f"../plots/{file}/flares/hip67522_savgol_model.png")
+    plt.savefig(f"../plots/{file}{pi}/flares/hip67522_savgol_model.png")
 
     # --------------------------------------------------------------------------------
 
@@ -293,7 +312,7 @@ if __name__ == '__main__':
     plt.xlabel(time_label)
     plt.ylabel(flux_label)
     plt.title("Savitzky-Golay de-trended light curve")
-    plt.savefig(f"../plots/{file}/flares/hip67522_savgol_detrended_lc.png")
+    plt.savefig(f"../plots/{file}{pi}/flares/hip67522_savgol_detrended_lc.png")
 
     # --------------------------------------------------------------------------------
 
@@ -318,22 +337,30 @@ if __name__ == '__main__':
     # REINTRODUCE FLARES TO THE FINAL LIGHT CURVE -----------------------------------------
 
     # if str(file) in flares["date"].values:
-    if str(file) in flares["newpipe"].values:
+    if str(name) in flares["newpipe"].values:
         
         notransitmodelfunc = metafunc(t[outlier_mask][-1], 0)
-        flarelc = pd.read_csv(f"../results/hip67522_flare_lc_{file}.csv")
-        ff = np.append(ff, flarelc["f"].values + newmed)
-        t = np.append(t, flarelc["t"].values)
-        bg = np.append(bg, extract(image_data, "BG")[flare_mask])
-        xc = np.append(xc, extract(image_data, "XC")[flare_mask])
-        yc = np.append(yc, extract(image_data, "YC")[flare_mask])
-        flag = np.append(flag, extract(image_data, "FLAG")[flare_mask])
-        roll = np.append(roll, extract(image_data, "ROLL")[flare_mask])
-        dT = np.append(dT, extract(image_data, "thermFront_2")[flare_mask])
-        ferr = np.append(ferr, extract(image_data, "FLUXERR")[flare_mask])
 
+
+        # do the roll angle correction for the flare region
+        f_sub_flare_approx = np.zeros_like(fflare)
+        for i, r in enumerate(rollflare):
+            idx = [np.argmin(np.abs(roll - r - delt)) for delt in np.linspace(-2, 2, 100)]
+            f_sub_flare_approx[i] = np.median(newf_sub[idx])
+
+        # subtract the flare model and roll angle correction
+        ff = np.append(ff, fflare + 2 * newmed - f_sub_flare_approx -notransitmodelfunc(tflare, *popt))
+
+        t = np.append(t, tflare)
+        bg = np.append(bg, bgflare)
+        xc = np.append(xc, xcflare)
+        yc = np.append(yc, ycflare)
+        flag = np.append(flag, flagflare)
+        dT = np.append(dT, dTflare)
+        roll = np.append(roll, rollflare)
+        ferr = np.append(ferr, ferrflare)
         
-        newfitted = np.append(newfitted, notransitmodelfunc(flarelc["t"].values, *popt))
+        newfitted = np.append(newfitted, notransitmodelfunc(tflare, *popt))
 
     # sort t, ff, and newfitted by t
     t, ff, newfitted = [arr[np.argsort(t)] for arr in [t, ff, newfitted]]
@@ -345,10 +372,12 @@ if __name__ == '__main__':
 
     plt.plot(t, ff, ".", markersize=1, color="red", label="quiescent model")
 
+    plt.axhline(newmed, color="black", lw=1, label="median")
+
     plt.xlabel(time_label)
     plt.ylabel(flux_label)
     plt.title("Final de-trendend light curve")
-    plt.savefig(f"../plots/{file}/flares/hip67522_final_detrended_light_curve.png")
+    plt.savefig(f"../plots/{file}{pi}/flares/hip67522_final_detrended_light_curve.png")
 
     # --------------------------------------------------------------------------------
 
@@ -357,13 +386,10 @@ if __name__ == '__main__':
 
     df = pd.DataFrame({"time": t, "flux": ff, "model" : newfitted, "flux_err": ferr,
                        "roll": roll, "dT": dT, "flag": flag, "bg": bg, "xc": xc, "yc": yc})
-    
-    # df.to_csv(f"../data/hip67522/CHEOPS-products-{file}/Outdata/00000/{file}_detrended_lc.csv", index=False)
 
     # new PIPE
-    df.to_csv(f"../data/hip67522/pipe_HIP67522/HIP67522_{file}_detrended_lc.csv", index=False)
+    df.to_csv(f"../data/hip67522/pipe_HIP67522/HIP67522_{file}{pi}_detrended_lc.csv", index=False)
 
     # WRITE THE INITAL MASK TO A txt FILE ------------------------------------------
 
-    # np.savetxt(f"../data/hip67522/CHEOPS-products-{file}/Outdata/00000/{file}_mask.txt", init_mask, fmt="%d")
-    np.savetxt(f"../data/hip67522/pipe_HIP67522/HIP67522_{file}_mask.txt", init_mask, fmt="%d")
+    np.savetxt(f"../data/hip67522/pipe_HIP67522/HIP67522_{file}{pi}_mask.txt", fullinit_mask, fmt="%d")
