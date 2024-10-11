@@ -355,15 +355,18 @@ if __name__ == '__main__':
         bg = np.append(bg, bgflare)
         xc = np.append(xc, xcflare)
         yc = np.append(yc, ycflare)
-        flag = np.append(flag, flagflare)
+        # flag = np.append(flag, flagflare)
         dT = np.append(dT, dTflare)
         roll = np.append(roll, rollflare)
         ferr = np.append(ferr, ferrflare)
         
         newfitted = np.append(newfitted, notransitmodelfunc(tflare, *popt))
 
-    # sort t, ff, and newfitted by t
-    t, ff, newfitted = [arr[np.argsort(t)] for arr in [t, ff, newfitted]]
+        # add a mask for the flare region
+        flag = np.append(flag, np.ones_like(fflare))
+
+    # sort all arrays by time
+    t, ff, newfitted, ferr, roll, dT, flag, bg, xc, yc = [arr[np.argsort(t)] for arr in [t, ff, newfitted, ferr, roll, dT, flag, bg, xc, yc]]
 
 
     # PLOT THE FINAL FLUX  ----------------------------------------------------------
