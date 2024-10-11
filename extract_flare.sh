@@ -1,4 +1,4 @@
-python extract_flare.py 20240415114752
-python extract_flare.py 20240529072301
-python extract_flare.py 20240410135336
-python extract_flare.py 20240325102059
+python extract_flare.py 103 i
+python extract_flare.py 104 i
+python extract_flare.py 107 i 
+python extract_flare.py 102 ch

@@ -58,6 +58,7 @@ def metafunc(offset2, transit):
                 b * (x - offset2 + offset)**2 + 
                 c * (x - offset2 + offset) + d + 
                 transit)
+
     return func
     
 
@@ -97,7 +98,7 @@ if __name__ == '__main__':
     assert np.diff(t).min() * 24 * 60 * 60 < 10.05, "Time series is not 10s cadence"
 
     # initial mask
-    init_mask = (f < 2.96e6) & (f > 2.3e6) & (flag==0)
+    init_mask = (f < 2.96e6) & (f > 2.3e6) & (flag==0) #& (t < 2460413.3) only for the 102ch flare fit bc the polynomial is slightly off there
     print(f"Initial mask: {np.where(~init_mask)[0].shape[0]} data points")
 
 
@@ -178,6 +179,7 @@ if __name__ == '__main__':
     modelfunc = metafunc(t[-1], transit)
 
     # fit the model to the light curve
+    
     popt, pcov = curve_fit(modelfunc, t, f, p0=[-1.45888787e+04, -1.41685433e+08, -1.03596058e+09,  1.00000000e+00,
             1.19292031e-02, -2.42900480e-09,  8.42088604e-01])
     
