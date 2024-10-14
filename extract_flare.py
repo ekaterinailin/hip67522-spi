@@ -1,5 +1,12 @@
 """
-Python 3.11.7, UTF-8
+UTF-8, Python 3.11.7
+
+------------
+HIP 67522
+------------
+
+Ekaterina Ilin, 2024, MIT License, ilin@astron.nl
+
 
 Extracts the flare light curve from a CHEOPS imagette light curve.
 Fits a flare model of choice and calculates the equivalent duration and bolometric flare energy.
@@ -444,11 +451,13 @@ if __name__ == "__main__":
     radius = np.random.normal(1.392, 0.05, 500)
 
     # calculate the bolometric flare energy for each sample
-    bol_energies = flare_factor(teff.reshape((500,1)), radius.reshape((500,1)), wav, resp,  tflare=tflare) * np.random.choice(eds, 500) * u.s
+    ffactor = flare_factor(teff.reshape((500,1)), radius.reshape((500,1)), wav, resp,  tflare=tflare)
+    bol_energies = ffactor * np.random.choice(eds, 500) * u.s
 
     # calculate the mean and standard deviation of the bolometric flare energy
     mean_bol_energy = np.mean(bol_energies)
     std_bol_energy = np.std(bol_energies)
+    mean_ffactor = np.mean(ffactor)
 
     # plot the distribution of the bolometric flare energy
     plt.figure(figsize=(6, 5))
@@ -465,11 +474,11 @@ if __name__ == "__main__":
         if two_flare:
             f.write(f"{file}{pi},{newmed},{ampl},{t_peak},{dur},{ampl2},{t_peak2},{dur2},{ED:.2e}," +
                     f"{EDerr:.2e},{mean_bol_energy},{std_bol_energy},{ingress},{egress}," + 
-                    f"{tmin},{tmax},{parametrization}\n")
+                    f"{tmin},{tmax},{parametrization},{mean_ffactor}\n")
         else:
             f.write(f"{file}{pi},{newmed},{ampl},{t_peak},{dur},,,,{ED:.2e}," +
                     f"{EDerr:.2e},{mean_bol_energy},{std_bol_energy},{ingress},{egress}," + 
-                    f"{tmin},{tmax},{parametrization}\n")
+                    f"{tmin},{tmax},{parametrization},{mean_ffactor}\n")
         
     # ---------------------------------------------------------------------------------
 

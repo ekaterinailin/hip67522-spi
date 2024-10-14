@@ -5,16 +5,14 @@ UTF-8, Python 3
 HIP 67522
 ------------
 
-Ekaterina Ilin, 2024, MIT License
+Ekaterina Ilin, 2024, MIT License, ilin@astron.nl
 
 
 This module contains helpful IO functions.
 """
 
-import glob
 import numpy as np
-
-from astropy.io import fits
+import pandas as pd
 
 import lightkurve as lk
 
@@ -74,32 +72,28 @@ def get_tess_orbital_phases(period, split=0.1, by_sector = False):
 
 def get_cheops_orbital_phases(period, midpoint, split=0.1):
 
-    files = glob.glob('../data/hip67522/CHEOPS-products-*/Outdata/00000/hip67522_CHEOPS-products-*_im.fits')
     time = np.array([])
-    flux = np.array([])
     cheopsphases = np.array([])
 
+     # load the file names
+    files = np.loadtxt("files.txt", dtype=str)
 
-    for file in files:
-        hdulist = fits.open(file)
+    # read in all the de-trended light curves
+    dlcs = []
+    for pi, file in files:
+        location = f"../data/hip67522/pipe_HIP67522/HIP67522_{file}{pi}_detrended_lc.csv"
+        dlcs.append(pd.read_csv(location))
 
 
-        # get the image data
-        image_data = hdulist[1].data
 
-        t, f, ferr, roll = image_data["BJD_TIME"], image_data["FLUX"], image_data["FLUXERR"], image_data["ROLL"]
+    for dlc in dlcs:
+
+        t = dlc["time"].values
 
         # make sure the data is in fact 10s cadence
         assert np.diff(t).min() * 24 * 60 * 60 < 10.05, "Time series is not 10s cadence"
 
-        # big endian to little endian
-        t = t.byteswap().newbyteorder()
-        f = f.byteswap().newbyteorder()
-        ferr = ferr.byteswap().newbyteorder()
-        roll = roll.byteswap().newbyteorder()
-
         time = np.concatenate([time, t])
-        flux = np.concatenate([flux, f])
         cheopsphases = np.concatenate([cheopsphases, ((t - midpoint) % period) / period])
 
     tot_obs_time_d_cheops = len(time) * 10. / 60. / 60. / 24.

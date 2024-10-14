@@ -73,7 +73,7 @@ if __name__ == "__main__":
     cheopsstd = np.std(np.array(stds) / np.array(meds))
 
     # SYNTHESIS ------------------------------------------------
-    print(f"{cheopsmed:.5f}, {cheopsstd:.5f}")
-    print(f"{tessmed:.5f}, {tessstd:.5f}")
+    print(f"CHEOPS noise level: {cheopsmed:.5f}, {cheopsstd:.5f}")
+    print(f"TESS noise level: {tessmed:.5f}, {tessstd:.5f}")
 
 
