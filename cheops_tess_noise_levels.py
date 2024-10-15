@@ -1,6 +1,11 @@
-# -*- coding: utf-8 -*-
 """
-@author: Ekaterina Ilin, 2024, ilin@astron.nl
+UTF-8, Python 3
+
+------------
+HIP 67522
+------------
+
+Ekaterina Ilin, 2024, MIT License, ilin@astron.nl
 
 Determine the mean noise level in the CHEOPS and TESS light curves.
 """
