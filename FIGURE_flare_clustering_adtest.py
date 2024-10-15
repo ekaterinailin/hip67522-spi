@@ -183,94 +183,101 @@ if __name__ == "__main__":
 
     # RUN AD AND KS TESTS -------------------------------------------------------------------
 
-    # TESS FLARES
-    tessps = ((df.tstart + 2457000 - midpoint + period ) % period / period ).values
-    tesslc = df.qcs.values
+    pvals = []
+    for i in range(100):
+        # TESS FLARES
+        tessps = ((df.tstart + 2457000 - midpoint + period ) % period / period ).values
+        tesslc = df.qcs.values
 
-    # CHEOPS FLARES
-    cheopsps = cheopsflares["phase"].values
-    cheopslc = [1,1,1,1]
+        # CHEOPS FLARES
+        cheopsps = cheopsflares["phase"].values
+        cheopslc = [1,1,1,1]
 
-    # combine the flares
-    pss = np.concatenate([tessps, cheopsps])
-    lcc = np.concatenate([tesslc, cheopslc])
+        # combine the flares
+        pss = np.concatenate([tessps, cheopsps])
+        lcc = np.concatenate([tesslc, cheopslc])
 
-    # sort the phases and get observed phases
-    ps, bins = get_observed_phases(np.sort(pss), lcs, [2,2,2,10./60.], [11, 38, 64,1])
+        # sort the phases and get observed phases
+        ps, bins = get_observed_phases(np.sort(pss), lcs, [2,2,2,10./60.], [11, 38, 64,1])
 
-    # calculate the expected number of flares in the CHEOPS data based on TESS data
-    F_k_cheops = 12 / ps[[11, 38, 64]].sum().sum() * ps[1].sum()
+        # calculate the expected number of flares in the CHEOPS data based on TESS data
+        F_k_cheops = 12 / ps[[11, 38, 64]].sum().sum() * ps[1].sum()
 
-    # sum ps in each lc
-    print("Obs time")
-    print(ps.sum(axis=0))
+        # sum ps in each lc
+        print("Obs time")
+        print(ps.sum(axis=0))
 
-    # init dataframe 
-    df = pd.DataFrame({"phases": pss, "qcs": lcc})
+        # init dataframe 
+        dp = pd.DataFrame({"phases": pss, "qcs": lcc})
 
-    # get the cumulative distributions
-    n_i, n_exp, cum_n_exp, cum_n_i = get_cumulative_distributions(df, ps, [11, 38, 64, 1], F_k_cheops=F_k_cheops)
+        # get the cumulative distributions
+        n_i, n_exp, cum_n_exp, cum_n_i = get_cumulative_distributions(dp, ps, [11, 38, 64, 1], F_k_cheops=F_k_cheops)
 
-    # plot the cumulative distribution
-    plt.figure(figsize=(8,6))
-    plt.plot(np.sort(pss), np.linspace(0,1,len(pss)), "k--")
-    plt.savefig(f"../plots/adtest/measured_cumhist.png")
+        # plot the cumulative distribution
+        plt.figure(figsize=(8,6))
+        plt.plot(np.sort(pss), np.linspace(0,1,len(pss)), "k--")
+        plt.savefig(f"../plots/adtest/measured_cumhist.png")
 
-    # complete the cumulative distribution with 0 and 1 for the AD test
-    p = np.sort(pss)
-    p = np.insert(p,0,0)
-    p = np.append(p,1)
+        # complete the cumulative distribution with 0 and 1 for the AD test
+        p = np.sort(pss)
+        p = np.insert(p,0,0)
+        p = np.append(p,1)
 
-    cum_n_exp = np.insert(cum_n_exp, 0, 0)
-    cum_n_i = np.insert(cum_n_i, 0, 0)
+        cum_n_exp = np.insert(cum_n_exp, 0, 0)
+        cum_n_i = np.insert(cum_n_i, 0, 0)
 
-    plt.figure(figsize=(8,6))
-    plt.plot(p, cum_n_exp, "o", color="green")
-    plt.savefig(f"../plots/adtest/expected_cumhist.png")
+        plt.figure(figsize=(8,6))
+        plt.plot(p, cum_n_exp, "o", color="green")
+        plt.savefig(f"../plots/adtest/expected_cumhist.png")
 
-    # plt.plot(p, cum_n_i, "o", color="red")
+        # plt.plot(p, cum_n_i, "o", color="red")
 
-    f = interpolate.interp1d(p, cum_n_exp, fill_value="extrapolate")
-    ph = np.linspace(0,1,1000)
-    plt.plot(ph, f(ph), c="green")
+        f = interpolate.interp1d(p, cum_n_exp, fill_value="extrapolate")
+        ph = np.linspace(0,1,1000)
+        plt.plot(ph, f(ph), c="green")
 
 
-    N =20000
-    # Make a diagnostic plot
-    plt.figure(figsize=(8,6))
+        N =20000
+        # Make a diagnostic plot
+        plt.figure(figsize=(8,6))
 
-    # plt.plot(p,f(p), c="green")
-    dsave = pd.DataFrame({"p":p, "f":f(p)})
-    dsave.to_csv(f"../results/adtest/cumhist.csv",
-                    index=False)
-    cumsum =  np.cumsum(np.ones_like(p)) / len(p)
-    plt.scatter(p, cumsum, c="r")
-    plt.title(f"HIP 67522")
-    plt.xlim(0,1)
-    plt.ylim(0,1)
-    plt.savefig(f"../plots/adtest/cumhist.png")
-    # plt.close()
+        # plt.plot(p,f(p), c="green")
+        dsave = pd.DataFrame({"p":p, "f":f(p)})
+        dsave.to_csv(f"../results/adtest/cumhist.csv",
+                        index=False)
+        cumsum =  np.cumsum(np.ones_like(p)) / len(p)
+        plt.scatter(p, cumsum, c="r")
+        plt.title(f"HIP 67522")
+        plt.xlim(0,1)
+        plt.ylim(0,1)
+        plt.savefig(f"../plots/adtest/cumhist.png")
+        # plt.close()
 
-    # Finally, run the A-D test
-    A2 = sample_AD_for_custom_distribution(f, p.shape[0], N)
+        # Finally, run the A-D test
+        A2 = sample_AD_for_custom_distribution(f, p.shape[0], N)
 
-    # This should go into the function above
-    # select only the finite values
-    print(np.isfinite(A2).sum(), A2.shape)
-    A2 = A2[np.isfinite(A2)]
+        # This should go into the function above
+        # select only the finite values
+        print(np.isfinite(A2).sum(), A2.shape)
+        A2 = A2[np.isfinite(A2)]
 
-    plt.figure(figsize=(8,6))   
-    plt.hist(A2, bins=50, histtype="step")
+        plt.figure(figsize=(8,6))   
+        plt.hist(A2, bins=50, histtype="step")
 
-    # Calculate the p-value and A2 value using the distribution 
-    # of A2 values
-    pval, atest = get_pvalue_from_AD_statistic(p, f, A2)
-    plt.axvline(atest, color="red")
-    plt.savefig(f"../plots/adtest/adtest.png")
-    print(pval, atest)
+        # Calculate the p-value and A2 value using the distribution 
+        # of A2 values
+        pval, atest = get_pvalue_from_AD_statistic(p, f, A2)
+        plt.axvline(atest, color="red")
+        plt.savefig(f"../plots/adtest/adtest.png")
+        print(pval, atest)
+        pvals.append(pval)
 
-    ks = kstest(p, f, args=(), N=1000, alternative='two-sided', mode='approx')
-    print(ks)
+        ks = kstest(p, f, args=(), N=1000, alternative='two-sided', mode='approx')
+        print(ks)
+
+    print("Mean and std of p-values: ")
+    print(np.mean(pvals), np.std(pvals))
+        
 
     # PLOT THE expected, measured and drawn distributions
 

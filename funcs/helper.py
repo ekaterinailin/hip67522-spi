@@ -41,7 +41,7 @@ def get_tess_orbital_phases(period, split=0.1, by_sector = False):
     ttess : float
         The total observing time in days of the TESS light curves.
     """
-    lcs = lk.search_lightcurvefile("HIP 67522", mission="TESS",author="SPOC", exptime=120)
+    lcs = lk.search_lightcurve("HIP 67522", mission="TESS",author="SPOC", exptime=120)
 
     # predictions from Rizzuto et al. 2020 using the NASA prediction tool for simplicity for each Sector
     midpoints = [2458694.49725,2459425.24506,2460155.99288] 
