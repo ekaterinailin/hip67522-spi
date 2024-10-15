@@ -46,7 +46,6 @@ def periodogram(t, y, dy, fmin=0.2, fmax=5, fap_levels=[1e-5], norm="standard", 
     fap = LombScargle(t, y, dy,normalization=norm).false_alarm_probability(power.max(), method=fap_method)
 
     fap_values = [LombScargle(t, y, dy,normalization=norm).false_alarm_level(fap_level, method=fap_method) for fap_level in fap_levels]
-    print(fap_values)
 
     return freq, power, window_power, period, fap, fap_values, fap_levels, fmin, fmax
 
@@ -118,17 +117,17 @@ if __name__ == "__main__":
         ax.axvline(period, color='black', linestyle='-', label=f'Period = {period:.3f} d')
 
         # layout
-        ax.set_xlabel('Period [d]')
         ax.set_ylabel('Power')
         ax.set_xlim(1/fmax, 1/fmin)
 
 
         ax.legend(frameon=False, loc=4)
 
+    ax.set_xlabel('Period [d]')
     plt.tight_layout()
     plt.yscale('log')
     # reduce the vertical space between the plots
-    plt.subplots_adjust(hspace=0.15)
+    plt.subplots_adjust(hspace=0.1)
 
     # add more subticks
     plt.gca().xaxis.set_minor_locator(plt.MultipleLocator(0.5))
@@ -206,6 +205,7 @@ if __name__ == "__main__":
     axin.plot(1/freq, window_power, linestyle='--', 
             color='blue', label='Window function', alpha=0.5)
     axin.set_xlim(period*0.9, period*1.1)   
+    axin.set_ylim(0, .7)
     axin.axvline(period, color='k', linestyle='-', 
                 label=f'Period = {period:.3f} d')
     # -------------------------------------------------------
@@ -300,6 +300,8 @@ if __name__ == "__main__":
     # add the mean+std of all periods
     periods["all"] = fr"{np.mean(vals):.4f} \pm {np.std(vals):.4f}"
 
+    print(periods["all"])
+
     # make a pandas dataframe and convert to latex
     ptab = pd.DataFrame(periods, index=["LS period [d]"]).T
 
@@ -314,6 +316,7 @@ if __name__ == "__main__":
     table = table.replace("\\bottomrule", "\\hline")
     table = table.replace("\\midrule", "\\hline")
     table = table.replace("all", "\\textbf{all}")
+    table = table.replace("\pm", "$\pm$")
 
     # save the table
     with open("../tables/rotation_periods.tex", "w") as f:
