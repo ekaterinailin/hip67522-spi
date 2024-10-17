@@ -210,6 +210,8 @@ if __name__ == "__main__":
                 label=f'Period = {period:.3f} d')
     # -------------------------------------------------------
 
+    ax.axvline(6.9596/2, c="r")
+
     # layout
     ax.set_xlabel('Period [d]')
     ax.set_ylabel('Power')
@@ -301,6 +303,9 @@ if __name__ == "__main__":
     periods["all"] = fr"{np.mean(vals):.4f} \pm {np.std(vals):.4f}"
 
     print(periods["all"])
+
+    print("Coherence time scale:")
+    print(np.mean(vals)**2 / np.std(vals))
 
     # make a pandas dataframe and convert to latex
     ptab = pd.DataFrame(periods, index=["LS period [d]"]).T
