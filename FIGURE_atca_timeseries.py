@@ -100,7 +100,7 @@ if __name__ == "__main__":
         ax = axs[i]
         
         g1 = group[group["source_J_val"]]
-        ax.errorbar(g1['phase'], g1['source_J'], yerr=g1['bkg_rms_J'], fmt='o')
+        ax.errorbar(g1['phase'], g1['source_J'], yerr=g1['bkg_rms_J'], fmt='o', c="blue")
         
         g2 = group[~group["source_J_val"]]
         ax.errorbar(g2['phase'], 3 * g2['bkg_rms_J'], yerr=g2['bkg_rms_J'], fmt='o', color="grey", uplims=True)
