@@ -240,7 +240,7 @@ if __name__ == "__main__":
         ed, freq, counts = ffd.ed_and_freq()
         
 
-        ffd.plot_mcmc_powerlaw(ax, BFA, c=c, custom_xlim=(4e33,1e36))
+        ffd.plot_mcmc_powerlaw(ax, BFA, c=c, custom_xlim=(1e33,1e36))
 
         ax.scatter(ed, freq, c="k", s=45, zorder=1000)
         ax.scatter(ed, freq, c=c, label=ffd.ID, s=25, zorder=1001)
@@ -259,12 +259,13 @@ if __name__ == "__main__":
     plt.yscale("log")
     plt.xlabel("Bolometric Flare Energy [erg]")
     plt.ylabel("cumulative number of flares per day")
-    plt.xlim(4e33, 1e36)
-    plt.ylim(4e-4, 2)
+    plt.xlim(1e33, 1e36)
+    plt.ylim(4e-4, 2.2)
 
     plt.tight_layout()
 
-    plt.savefig("../plots/ffd/ffd_vs_phases.png")
+    plt.savefig("../plots/paper/ffd_vs_phases.png", dpi=300)
+    plt.savefig("../plots/ffd/ffd_vs_phases.png", dpi=300)
 
     # --------------------------------------------------------------------------------------------
 
