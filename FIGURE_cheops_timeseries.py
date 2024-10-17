@@ -34,6 +34,21 @@ if __name__ == "__main__":
     dlcs = [dlcs[i] for i in np.argsort(t0s)]
 
 
+    # MERGE ALL THE LIGHT CURVES INTO ONE DATA FRAME for later use --------------------------------------------
+
+    # combine all the dlcs into one data frame, adding the file+pi as identifier column
+    for i, dlc in enumerate(dlcs):
+        dlcs[i]["file"] = files[i][0] + files[i][1]
+
+    # concatenate the dlcs
+    dlcpd = pd.concat(dlcs)
+
+    # save the combined dlcs to a csv file
+    dlcpd.to_csv("../data/cheops_all_timeseries.csv", index=False)
+
+    # ----------------------------------------------------------------------------------------------------------
+
+
     # make a big plot with a total of 21 subplots with two columns showing the dlcs and lcs fitting one A4 page
     fig, axes = plt.subplots(7, 3, figsize=(2*8.27, 2*11.69), sharey=True)
 
