@@ -14,6 +14,9 @@ import pandas as pd
 flux_label = r"Flux [e$^{-}$/s]"
 time_label = "Time [BJD]"
 
+# make font size larger
+plt.rcParams.update({'font.size': 13})
+
 
 if __name__ == "__main__":
 
@@ -50,7 +53,7 @@ if __name__ == "__main__":
 
 
     # make a big plot with a total of 21 subplots with two columns showing the dlcs and lcs fitting one A4 page
-    fig, axes = plt.subplots(7, 3, figsize=(2*8.27, 2*11.69), sharey=True)
+    fig, axes = plt.subplots(7, 3, figsize=(2*8.5, 2*11.), sharey=True)
 
     for i, ax in enumerate(axes.flatten()):
         ax.scatter(dlcs[i]["time"], dlcs[i]["flux"], s=1, color="k", label="CHEOPS")
@@ -78,6 +81,7 @@ if __name__ == "__main__":
     plt.tight_layout()
 
     # reduce the vertical space between subplots
-    plt.subplots_adjust(hspace=0.15)
+    plt.subplots_adjust(hspace=0.2)
+
 
     plt.savefig("../plots/paper/cheops_lc.png", dpi=300)
