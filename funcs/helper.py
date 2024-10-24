@@ -16,6 +16,19 @@ import pandas as pd
 
 import lightkurve as lk
 
+COLORS = [
+    "cyan",  # Blue
+    "#D95F0E",  # Vermilion
+    "#009E73",  # Teal
+    "maroon",  # maroon
+    "#CC79A7",  # Pink
+    "#56B4E9",  # Sky Blue
+    "#FF7F00",  # Orange
+    "olive",   # Dark Red
+    "#FF4500",   # Orange Red
+    "#1F78B4" # Blue
+        ]
+
 def get_tess_orbital_phases(period, split=0.1, by_sector = False):
     """Download the TESS light curves for HIP 67522 and calculate the observing 
     time in the first 10% and last 90% of the orbit, or any other split.  

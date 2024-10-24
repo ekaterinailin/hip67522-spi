@@ -123,8 +123,8 @@ if __name__ == "__main__":
     # convert the UTC to JD
     df['jd'] = Time(df['datetime'], scale="utc").jd
 
-    # if source_J is < than 3 * bkg_rms_J, set it to 3 * bkg_rms_J and upper limit the error bar
-    df['source_J_val'] = df["source_J"] > (3 * df["bkg_rms_J"]) 
+    # if source_J is < than 5 * bkg_rms_J or below the max value in the background, set source_J_val to False
+    df['source_J_val'] = (df["source_J"] > (5 * df["bkg_rms_J"]))  &  (df["source_J"] > (df["bkg_max_J"])) 
 
     # convert JD to orbital phase
     df['phase'] = np.mod(df['jd'] - midpoint, period) / period
