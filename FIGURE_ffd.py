@@ -242,6 +242,25 @@ if __name__ == "__main__":
 
         ffd.plot_mcmc_powerlaw(ax, BFA, c=c, custom_xlim=(1e33,1e36))
 
+        # get the mean beta and alpha values
+        betas = BFA.samples[:,0]
+        alphas = BFA.samples[:,1]
+
+        # caclutae r35 to compare to Davenport+2019
+        r35 = betas / (alphas - 1) * (10**35)**(-alphas+1)
+
+        # get 16, 50, 84 percentiles
+        r35 = np.percentile(r35, [16, 50, 84])
+
+        # print the mean and errors of r35
+        r35 = np.log10(r35)
+
+        # get the errors
+        meanr35, lower_err, upper_err = r35[1], r35[1] - r35[0], r35[2] - r35[1]
+
+        # print the results
+        print(f"R35 for {ffd.ID}: {meanr35:.2f} +{upper_err:.2f} -{lower_err:.2f}")
+
         ax.scatter(ed, freq, c="k", s=45, zorder=1000)
         ax.scatter(ed, freq, c=c, label=ffd.ID, s=25, zorder=1001)
     
