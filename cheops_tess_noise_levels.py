@@ -24,6 +24,8 @@ if __name__ == "__main__":
     lcs = lcs[[0,1,3]].download_all()
 
     stds, meds = [], []
+
+    pointpoint = []
     for lc in lcs:
         flc = FlareLightCurve(time=lc.time.value, flux=lc.flux.value, flux_err=lc.flux_err.value)
         flcd = flc.detrend(mode="custom", func=custom_detrending, **{"savgol1":6., "savgol2":3., "spline_coarseness":6.})
@@ -38,9 +40,14 @@ if __name__ == "__main__":
         stds.append(np.nanstd(flcd.detrended_flux))
         meds.append(np.nanmedian(flcd.detrended_flux))
 
+        pointpoint.append(np.nanmedian(np.abs(np.diff(flcd.detrended_flux))/np.nanmedian(flcd.detrended_flux) * 1e6))
+
     # get the mean noise level from meds and stds
     tessmed = np.mean(np.array(stds) / np.array(meds))
     tessstd = np.std(np.array(stds) / np.array(meds))
+
+    tesspointmean = np.mean(pointpoint)
+    tesspointstd = np.std(pointpoint)
 
     # CHEOPS ------------------------------------------------
     # now load cheops lightcurves
@@ -59,6 +66,8 @@ if __name__ == "__main__":
 
     # now loop over the light curves and calculate the mean and std of each detrended light curve
     stds, meds = [], []
+
+    pointpoint = []
     for dlc in dlcs:
         # check if there are flares in the light curve
         if len(flares[(flares["tmin"] > dlc["time"].min()) & (flares["tmax"] < dlc["time"].max())]) == 0:
@@ -73,12 +82,21 @@ if __name__ == "__main__":
         meds.append(np.nanmedian(dlc["flux"]))
         stds.append(np.nanstd(dlc["flux"]))
 
+        pointpoint.append(np.nanmedian(np.abs(np.diff(dlc["flux"])))/np.nanmedian(dlc["flux"]) * 1e6)
+
     # get the mean noise level from meds and stds
     cheopsmed = np.mean(np.array(stds) / np.array(meds))
     cheopsstd = np.std(np.array(stds) / np.array(meds))
 
+    cheopspointmean = np.mean(pointpoint)
+    cheopspointstd = np.std(pointpoint)
+
+
     # SYNTHESIS ------------------------------------------------
     print(f"CHEOPS noise level: {cheopsmed:.5f}, {cheopsstd:.5f}")
     print(f"TESS noise level: {tessmed:.5f}, {tessstd:.5f}")
+
+    print(f"CHEOPS point-to-point noise level: {cheopspointmean:.5f}, {cheopspointstd:.5f}")
+    print(f"TESS point-to-point noise level: {tesspointmean:.5f}, {tesspointstd:.5f}")
 
 
