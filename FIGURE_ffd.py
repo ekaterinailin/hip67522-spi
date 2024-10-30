@@ -214,16 +214,19 @@ if __name__ == "__main__":
 
     df10 = df[df["phase"]<0.1]
     df90 = df[df["phase"]>0.1]
+    dffull = df.sort_values("ed_rec", ascending=True).iloc[1:] # exclude the smallest flare
     obs10 =  ttess01 + tcheops01
-    obs90 =  ttess09 + tcheops09 
+    obs90 =  ttess09 + tcheops09
+    obsfull = tot_obs_time_d_tess + tot_obs_time_d_cheops 
 
     ffd10 = FFD(f=df10, tot_obs_time=obs10, ID="phases 0-0.1")
     ffd90 = FFD(f=df90, tot_obs_time=obs90, ID="phases 0.1-1")
+    fullffd = FFD(f=dffull, tot_obs_time=obsfull, ID="phases 0-1")
 
-    color = ["b", "olive"]
+    color = ["b", "olive", "grey"]
 
     bfas = []
-    for ffd, c in list(zip([ffd10, ffd90], color)):
+    for ffd, c in list(zip([ffd10, ffd90, fullffd], color)):
 
         ed, freq, counts = ffd.ed_and_freq()
         # fit power law to each
@@ -236,7 +239,7 @@ if __name__ == "__main__":
     # MAKE A FIGURE OF THE FFD FITS ---------------------------------------------------------------
 
     fig, ax = plt.subplots(figsize=(6.5, 5))
-    for ffd, c, BFA in list(zip([ffd10, ffd90], color, bfas)):
+    for ffd, c, BFA in list(zip([ffd10, ffd90, fullffd], color, bfas)):
         ed, freq, counts = ffd.ed_and_freq()
         
 
@@ -253,13 +256,35 @@ if __name__ == "__main__":
         r35 = np.percentile(r35, [16, 50, 84])
 
         # print the mean and errors of r35
-        r35 = np.log10(r35)
+        r35 = np.log10(np.array(r35, dtype=float))
 
         # get the errors
         meanr35, lower_err, upper_err = r35[1], r35[1] - r35[0], r35[2] - r35[1]
 
         # print the results
         print(f"R35 for {ffd.ID}: {meanr35:.2f} +{upper_err:.2f} -{lower_err:.2f}")
+
+
+        # calculate r34 to compare to Maehara2015
+        r34 = betas / (alphas - 1) * (10**34)**(-alphas+1)
+
+        # get 16, 50, 84 percentiles
+        r34 = np.percentile(r34, [16, 50, 84])
+
+        # print the mean and errors of r35
+        r34 = np.log10(np.array(r34, dtype=float))
+
+        # get the errors
+        meanr34, lower_err, upper_err = r34[1], r34[1] - r34[0], r34[2] - r34[1]
+
+        # print the results
+        print(f"R34 for {ffd.ID}: {meanr34:.2f} +{upper_err:.2f} -{lower_err:.2f}")
+
+        # print the mean and std of alpha 
+        print(f"alpha for {ffd.ID}: {alphas.mean():.2f} +/- {alphas.std():.2f}")
+
+        # print the mean and std of beta
+        print(f"beta for {ffd.ID}: {betas.mean():.2f} +/- {betas.std():.2f}")
 
         ax.scatter(ed, freq, c="k", s=45, zorder=1000)
         ax.scatter(ed, freq, c=c, label=ffd.ID, s=25, zorder=1001)
@@ -269,6 +294,8 @@ if __name__ == "__main__":
                         label='orbital phases 0.0 - 0.1', markerfacecolor='b', markersize=10),
                 plt.Line2D([0], [0], marker='o', color='w', 
                             label='orbital phases 0.1 - 1.0', markerfacecolor='olive', markersize=10),
+                plt.Line2D([0], [0], marker='o', color='w', markerfacecolor='grey', markersize=10,
+                            label='all flares'),
                 plt.Line2D([0], [0], color='k', 
                             label='Posterior draws from power law fit')]
 

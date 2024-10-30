@@ -45,7 +45,7 @@ if __name__ == "__main__":
 
     # PLOT THE FLUX DENSITY VS ORBITAL AND ROTATIONAL PHASE --------------------------------------------
 
-    fig, axs = plt.subplots(nrows=2, ncols=1, figsize=(9, 10))
+    fig, axs = plt.subplots(nrows=2, ncols=1, figsize=(6, 8))
     versions = [("Orbital phase of HIP 67522 b", "phase", axs[0]), 
                 ("Rotational phase of HIP 67522", "rot_phase", axs[1])] 
 
@@ -75,8 +75,8 @@ if __name__ == "__main__":
         ax.set_ylabel('Flux Density [Jy]')
         ax.set_xlim(0,1)
         ax.set_ylim(0,1.6e-3)
-        if version == "Orbital phase of HIP 67522 b":
-            ax.legend(ncol=2, frameon=False, loc=2)
+        if version == "Rotational phase of HIP 67522":
+            ax.legend(ncol=2, frameon=False, loc=2, fontsize=10)
 
 
     plt.tight_layout()

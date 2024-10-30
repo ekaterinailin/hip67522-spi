@@ -104,6 +104,8 @@ if __name__ == "__main__":
     plt.tight_layout()
     plt.savefig('../plots/four_bin_spectra_individual_fits.png', dpi=300)
 
+    # ----------------------------------------------------------------
+
     # CONFIRM THAT THERE IS CORRELATION BETWEEN FLUX AND SPECTRAL INDEX
 
     # check that there is indeed a correlation between alpha and flux
@@ -163,6 +165,18 @@ if __name__ == "__main__":
 
     # fill in vals into masked range
     vals[~mask] = masked_vals
+
+
+    # CALCULATE THE QUIESCENT BETA VALUE ----------------------------
+
+    # sort betas by value
+    betas = popt[1:]
+    sort_betas = np.sort(betas)[:-2] # drop the two highest values
+    
+    mean_beta = np.mean(sort_betas)
+    std_beta = np.std(sort_betas)
+
+    print(fr"Mean power law offset in quiescence: ${mean_beta:.5f} \pm {std_beta:.5f}")
 
     # PLOT THE RESULTS ----------------------------------------------
 
