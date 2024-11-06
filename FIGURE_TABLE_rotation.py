@@ -311,7 +311,7 @@ if __name__ == "__main__":
     ptab = pd.DataFrame(periods, index=["LS period [d]"]).T
 
     # add comments
-    ptab["comment"] = ["1/2 P", "", "", "" , "no sign. P",""]
+    ptab["comment"] = [r"1/2 $P$", "", "", "" , r"no sign. $P$",""]
  
     # convert ptab to latex
     table = ptab.to_latex(index=True, escape=False, column_format="lll")

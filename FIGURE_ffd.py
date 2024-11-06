@@ -243,7 +243,7 @@ if __name__ == "__main__":
         ed, freq, counts = ffd.ed_and_freq()
         
 
-        ffd.plot_mcmc_powerlaw(ax, BFA, c=c, custom_xlim=(1e33,1e36))
+        ffd.plot_mcmc_powerlaw(ax, BFA, c=c, subset=100, alpha=0.01, custom_xlim=(1e33,1e36))
 
         # get the mean beta and alpha values
         betas = BFA.samples[:,0]
@@ -297,7 +297,7 @@ if __name__ == "__main__":
                 plt.Line2D([0], [0], marker='o', color='w', markerfacecolor='grey', markersize=10,
                             label='all flares'),
                 plt.Line2D([0], [0], color='k', 
-                            label='Posterior draws from power law fit')]
+                            label='posterior draws from power law fit')]
 
     ax.legend(handles=handles, frameon=False, loc=3)
         

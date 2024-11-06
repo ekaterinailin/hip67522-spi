@@ -100,17 +100,18 @@ if __name__ == "__main__":
         ax = axs[i]
         
         g1 = group[group["source_J_val"]]
-        ax.errorbar(g1['phase'], g1['source_J'], yerr=g1['bkg_rms_J'], fmt='o', c="blue")
+        ax.errorbar(g1['jd'], g1['source_J'], yerr=g1['bkg_rms_J'], fmt='o', c="blue")
         
         g2 = group[~group["source_J_val"]]
-        ax.errorbar(g2['phase'], 3 * g2['bkg_rms_J'], yerr=g2['bkg_rms_J'], fmt='o', color="grey", uplims=True)
+        ax.errorbar(g2['jd'], g2['source_J'], yerr=g2['bkg_rms_J'], fmt='o', color="grey", uplims=True)
         
         ax.set_title(group["date"].iloc[0], fontsize=12)
 
         
     # set x-labels for the bottom row
     for ax in axs[-2:]:
-        ax.set_xlabel('Orbital Phase of HIP 67522 b')
+        # ax.set_xlabel('Orbital Phase of HIP 67522 b')
+        ax.set_xlabel('Time [JD]')
 
     # set y-labels for the left column
     for ax in axs[::2]:
