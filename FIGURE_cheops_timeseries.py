@@ -36,6 +36,8 @@ if __name__ == "__main__":
     t0s = [lc["time"].min() for lc in dlcs]
     dlcs = [dlcs[i] for i in np.argsort(t0s)]
 
+    print("Number of light curves: ", len(dlcs))
+
 
     # MERGE ALL THE LIGHT CURVES INTO ONE DATA FRAME for later use --------------------------------------------
 
@@ -51,37 +53,61 @@ if __name__ == "__main__":
 
     # ----------------------------------------------------------------------------------------------------------
 
+    fig = plt.figure(figsize=(17, 25))
+    flataxes = []   
 
-    # make a big plot with a total of 21 subplots with two columns showing the dlcs and lcs fitting one A4 page
-    fig, axes = plt.subplots(7, 3, figsize=(2*8.5, 2*11.), sharey=True)
+    gs = fig.add_gridspec(7, 1, hspace=0.25, wspace=0.3, 
+                          top=0.98, bottom=0.03, left=0.06, right=0.99)
+    gss = []
+    for i in range(7):
+        # add subgridspec with two rows and three columns
+        gss.append(gs[i].subgridspec(2, 3, hspace=0.0, wspace=0.2))
 
-    for i, ax in enumerate(axes.flatten()):
-        ax.scatter(dlcs[i]["time"], dlcs[i]["flux"], s=1, color="k", label="CHEOPS")
-        ax.scatter(dlcs[i-len(dlcs)]["time"], dlcs[i-len(dlcs)]["masked_raw_flux"] + 0.1e6, s=1, color="grey", label="CHEOPS")
+    for i in range(7):
+        for j in range(2):
+            for k in range(3):
+                flataxes.append(fig.add_subplot(gss[i][j, k]))
 
-        # plot the model, too
-        ax.plot(dlcs[i-len(dlcs)]["time"], dlcs[i-len(dlcs)]["model"] + 0.1e6, color="orange", label="Model")
-            
-        ax.set_xlim(dlcs[i]["time"].min(), dlcs[i]["time"].max())
+    # Loop over the flattened axes array (14 rows, 3 columns)
+    for i in [0,1,2,6,7,8,12,13,14,18,19,20,24,25,26,30,31,32,36,37,38]:
 
-        # if any of the flares in the flares table are in the time range of the light curve, mark tmin-tmax with axvspan
-        for flare in flares[(flares["tmin"] > dlcs[i]["time"].min()) & (flares["tmax"] < dlcs[i]["time"].max())].iterrows():
-            ax.axvspan(flare[1]["tmin"], flare[1]["tmax"], color="red", alpha=0.3, zorder=-10)
+        # Determine the corresponding original index (0-based index of the original grid)
+        original_idx = (i//2) + i%2   # Every two axes correspond to one original subplot 36 + x = 18,  37 + x = 19, 38 + x = 20
+        if i%3 ==2:
+            original_idx = original_idx + 1
 
 
-    # only set y label for the first column
-    for ax in axes[:, 0]:
-        ax.set_ylabel(flux_label)
+        idup, iddown = i, i+3
+        ax1, ax2 = flataxes[idup], flataxes[iddown]
 
-    # only set x label for the last row
-    for ax in axes[-1, :]:
+        print(original_idx, idup, iddown)
+        ax2.set_xlim(dlcs[original_idx]["time"].min(), dlcs[original_idx]["time"].max())
+        ax1.set_xticklabels([])
+        ax1.tick_params(axis='x', which='both', bottom=False, top=False)
+        ax1.set_xlim(ax2.get_xlim())
+
+        
+        flataxes[idup].scatter(dlcs[original_idx]["time"], dlcs[original_idx]["masked_raw_flux"] , s=1, color="grey", label="CHEOPS")
+        flataxes[idup].plot(dlcs[original_idx]["time"], dlcs[original_idx]["model"], color="orange", label="Model")
+        
+        # Plot the second "bottom" subplot (even rows in the new grid)
+    
+        flataxes[iddown].scatter(dlcs[original_idx]["time"], dlcs[original_idx]["flux"], s=1, color="k", label="CHEOPS")
+        
+    
+        # Mark flares if they are within the time range of the current light curve
+        for flare in flares[(flares["tmin"] > dlcs[original_idx]["time"].min()) & 
+                            (flares["tmax"] < dlcs[original_idx]["time"].max())].iterrows():
+            flataxes[iddown].axvspan(flare[1]["tmin"], flare[1]["tmax"], color="red", alpha=0.3, zorder=-10)
+
+
+    # # only set y label for the first column
+    for i in range(0, 42, 3):
+        flataxes[i].set_ylabel(flux_label)
+
+    # # only set x label for the last row
+    for ax in flataxes[-3:]:
         ax.set_xlabel(time_label)
-
-    # bring the subplots closer together
-    plt.tight_layout()
-
-    # reduce the vertical space between subplots
-    plt.subplots_adjust(hspace=0.2)
 
 
     plt.savefig("../plots/paper/cheops_lc.png", dpi=300)
