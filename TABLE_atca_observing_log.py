@@ -74,8 +74,10 @@ if __name__ == "__main__":
     string = string.replace("\\midrule", "")
 
     # put hline after [h] & \\
-    string = string.replace("[h] &  \\\\", "[h] &  \\\\ \\hline")
+    string = string.replace("[h] & Config. \\\\", "[h] &  Config. \\\\ \\hline")
 
+    # string = string.replace("[h] &  \\\\", "[h] &  \\\\ \\hline")
+    
 
     # write to file
     with open("../tables/atca_observing_log.tex", "w") as f:

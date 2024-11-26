@@ -20,6 +20,7 @@ import matplotlib.lines as mlines
 
 from scipy.stats import kstest
 
+from astropy.stats import kuiper
 from scipy import interpolate
 
 import pandas as pd
@@ -171,12 +172,15 @@ if __name__ == "__main__":
 
     # ----------------------------------------------------------------------------------------
 
-
+    # maggio_phases = np.linspace(0.895, 1.005, 100)%1
+    # cadence = (1.005 - 0.895) * period / 100 * 24 * 60
+    # maggio_flares = [0.905, 0.925]
 
     # COMBINE ALL OBSERVED PHASES ------------------------------------------------------------
 
     lcs = tess_phases.copy()
     lcs.append(np.sort(cheops_phases))
+    # lcs.append(maggio_phases)
 
     # ----------------------------------------------------------------------------------------
 
@@ -184,24 +188,41 @@ if __name__ == "__main__":
     # RUN AD AND KS TESTS -------------------------------------------------------------------
 
     pvals = []
-    for i in range(100):
+    kuipers = []
+    # shifts = [0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55,
+    #           0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95, 1.0]
+    for i in range(20):
         # TESS FLARES
         tessps = ((df.tstart + 2457000 - midpoint + period ) % period / period ).values
         tesslc = df.qcs.values
 
         # CHEOPS FLARES
-        cheopsps = cheopsflares["phase"].values
-        cheopslc = [1,1,1,1]
+        cheopsps = np.sort(cheopsflares["phase"].values)[:-1]
+        cheopslc = [1,1,1]
+
+        # MAGGIO FLARES
+        # maggiops = maggio_flares
+        # maggiolc = [0,0]
 
         # combine the flares
-        pss = np.concatenate([tessps, cheopsps])
-        lcc = np.concatenate([tesslc, cheopslc])
+        pss = np.concatenate([tessps,cheopsps])#, 
+
+        print(pss)
+        lcc = np.concatenate([tesslc,cheopslc])# , 
+
+        # np.save("../results/adtest/flares", pss)
+        # print(len(lcs))
+        # for num, lc in enumerate(lcs):
+        #     np.save(f"../results/adtest/lcs{num}", lc)
+
 
         # sort the phases and get observed phases
-        ps, bins = get_observed_phases(np.sort(pss), lcs, [2,2,2,10./60.], [11, 38, 64,1])
+        ps, bins = get_observed_phases(np.sort(pss), lcs, [2,2,2, 10./60.], [11, 38, 64,1]) # 10./601
 
         # calculate the expected number of flares in the CHEOPS data based on TESS data
         F_k_cheops = 12 / ps[[11, 38, 64]].sum().sum() * ps[1].sum()
+
+        print( 12 / ps[[11, 38, 64]].sum().sum())
 
         # sum ps in each lc
         print("Obs time")
@@ -211,7 +232,7 @@ if __name__ == "__main__":
         dp = pd.DataFrame({"phases": pss, "qcs": lcc})
 
         # get the cumulative distributions
-        n_i, n_exp, cum_n_exp, cum_n_i = get_cumulative_distributions(dp, ps, [11, 38, 64, 1], F_k_cheops=F_k_cheops)
+        n_i, n_exp, cum_n_exp, cum_n_i = get_cumulative_distributions(dp, ps, [11, 38, 64, 1], F_k_cheops=F_k_cheops)# F_k_cheops
 
         # plot the cumulative distribution
         plt.figure(figsize=(8,6))
@@ -236,8 +257,12 @@ if __name__ == "__main__":
         ph = np.linspace(0,1,1000)
         plt.plot(ph, f(ph), c="green")
 
+        print("Kuiper test")
+        kuip = kuiper(p, f)
+        kuipers.append(kuip)
 
-        N =20000
+
+        N =10000
         # Make a diagnostic plot
         plt.figure(figsize=(8,6))
 
@@ -277,7 +302,19 @@ if __name__ == "__main__":
 
     print("Mean and std of p-values: ")
     print(np.mean(pvals), np.std(pvals))
+
+    print("Median and std of p-values: ")
+    print(np.median(pvals), np.std(pvals))
+
+    print("Mean and std of Kuiper test: ")
+    print(np.mean(kuipers), np.std(kuipers))
+
+    print("Median and std of Kuiper test: ")
+    print(np.median(kuipers), np.std(kuipers))
+
+    print(kuipers)
         
+    print(pvals)
 
     # PLOT THE expected, measured and drawn distributions
 

@@ -33,7 +33,7 @@ if __name__ == "__main__":
     ax2 = ax1.twinx()
 
     # plot both data sets
-    ax1.scatter(atca.jd, atca.source_J, s=10, c="blue")
+    ax1.scatter(atca.jd, atca.source_J*1e3, s=10, c="blue")
     ax2.scatter(cheops.time, cheops.masked_raw_flux, s=1, c="olive")
 
     # legend
@@ -44,9 +44,9 @@ if __name__ == "__main__":
             frameon = False)
 
     # layout
-    ax2.set_ylabel(r"CHEOPS Flux [e$^{-}$/s]")
+    ax2.set_ylabel(r"CHEOPS flux [e$^{-}$/s]")
     ax1.set_xlabel("Time [JD]")
-    ax1.set_ylabel("ATCA L band Stokes I [Jy]")
+    ax1.set_ylabel("ATCA L band Stokes I [mJy]")
     plt.tight_layout()
 
     # save the figure

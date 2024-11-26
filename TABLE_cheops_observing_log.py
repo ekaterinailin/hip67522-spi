@@ -11,8 +11,6 @@ This script reads the observing log of CHEOPS observations of HIP 67522 and conv
 
 """
 
-
-
 import pandas as pd
 import numpy as np
 
