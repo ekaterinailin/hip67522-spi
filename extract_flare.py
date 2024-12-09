@@ -420,7 +420,7 @@ if __name__ == "__main__":
     # GET BOLOMETRIC FLARE ENERGY ------------------------------------------------------
     
     # read CHEOPS response function
-    cheops_resp = pd.read_csv("../data/CHEOPS_bandpass.csv",)
+    cheops_resp = pd.read_csv("../data/CHEOPS_bandpass.csv")
     wav, resp = cheops_resp.WAVELENGTH.values, cheops_resp.THROUGHPUT.values
 
     # effective temperature of HIP 67522 from Rizzuto et al. 2020

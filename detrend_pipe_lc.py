@@ -98,7 +98,7 @@ if __name__ == '__main__':
     assert np.diff(t).min() * 24 * 60 * 60 < 10.05, "Time series is not 10s cadence"
 
     # initial mask
-    init_mask = (f < 2.96e6) & (f > 2.3e6) & (flag==0) #& (t < 2460413.3) only for the 102ch flare fit bc the polynomial is slightly off there
+    init_mask = (f < 2.96e6) & (f > 2.3e6) & (flag==0) #& (t >2460413.25) #only for the 102ch flare fit bc the polynomial is slightly off there
     print(f"Initial mask: {np.where(~init_mask)[0].shape[0]} data points")
 
 
@@ -169,7 +169,12 @@ if __name__ == '__main__':
     m = batman.TransitModel(params, t)    #initializes model
     transit = m.light_curve(params)          #calculates light curve
 
+    # make a mask of the transit defined a everything below 1
+    transit_mask = transit < 1
+
     transit = (transit - 1) * np.median(f) # scale to the median flux
+
+
 
     # -----------------------------------------------------------------------------
 
@@ -241,6 +246,9 @@ if __name__ == '__main__':
     # UPDATE TRANSIT MODEL WITH SUBTRACTED LIGHT CURVE -----------------------------
     m = batman.TransitModel(params, t[outlier_mask])    #initializes model
     transit = m.light_curve(params)          #calculates light curve
+
+    # make a mask of the transit defined a everything below 1
+    transit_mask = transit < 1
 
     transit = (transit - 1) * np.median(f_sub[outlier_mask])
 
@@ -370,7 +378,10 @@ if __name__ == '__main__':
         dT = np.append(dT[outlier_mask], dTflare)
         roll = np.append(roll[outlier_mask], rollflare)
         ferr = np.append(ferr[outlier_mask], ferrflare)
+        transit_mask = np.append(transit_mask, np.zeros_like(fflare))
         
+
+        print(flag.shape, transit_mask.shape)
         newfitted = np.append(newfitted[outlier_mask], notransitmodelfunc(tflare, *popt))
 
         # add a mask for the flare region
@@ -390,7 +401,9 @@ if __name__ == '__main__':
         roll = roll[outlier_mask]
         ferr = ferr[outlier_mask]
         flag = flag[outlier_mask]
-
+        # transit_mask = transit_mask[outlier_mask]
+       
+        print(flag.shape, transit_mask.shape)
 
         raw_f = raw_f[fullinit_mask][outlier_mask]
 
@@ -431,8 +444,10 @@ if __name__ == '__main__':
 
     # WRITE THE FINAL LIGHT CURVE TO A CSV FILE ------------------------------------------
     
-    df = pd.DataFrame({"time": t, "flux": ff, "model" : newfitted, "flux_err": ferr, "masked_raw_flux": raw_f,
-                       "roll": roll, "dT": dT, "flag": flag, "bg": bg, "xc": xc, "yc": yc})
+    df = pd.DataFrame({"time": t, "flux": ff, "model" : newfitted, 
+                       "flux_err": ferr, "masked_raw_flux": raw_f,
+                       "roll": roll, "dT": dT, "flag": flag, "bg": bg, 
+                       "xc": xc, "yc": yc, "transit_mask": transit_mask})
 
     # new PIPE
     df.to_csv(f"../data/hip67522/pipe_HIP67522/HIP67522_{file}{pi}_detrended_lc.csv", index=False)

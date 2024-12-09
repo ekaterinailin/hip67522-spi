@@ -26,7 +26,7 @@ if __name__ == "__main__":
     phases = (phases + 0.5) % 1
 
     # define binning
-    nbins = 50
+    nbins = 100
     bins = np.linspace(0, 1, nbins)
     binmids= (bins[1:] + bins[:-1]) / 2
 
@@ -50,11 +50,23 @@ if __name__ == "__main__":
 
     def unmodulated_model(lambda0, weight=binned):
         return lambda0 * weight #number of observed flares per bin
+    
+    max_lambda0 = 1.
+    max_lambda1 = 1.
 
-    # fake_l = 0.1
+    min_lambda0 = 0.0001
+    min_lambda1 = 0.0001
+
+    # fake_l = 0.2
     # rate = unmodulated_model(fake_l)
 
     # hist = np.array([np.random.poisson(r) for r in rate])
+
+    # save rate and hist to fake_bayes_factors_samples.txt
+    # with open("fake_bayes_factors_samples.txt", "a") as f:
+    #     string = f"{rate} {hist}\n"
+    #     f.write(string)
+    #     print(string)
 
     # print(rate)
 
@@ -77,9 +89,10 @@ if __name__ == "__main__":
         return log_likelihood_poisson(rate, hist, factorials)
 
     def log_prior_mod(params):
-        if ((params[0] > 0) & (params[1] > 0) & (params[1] < 2.5) & ( params[0] < 2.5) &
+        if ((params[0] > min_lambda0) & (params[1] > min_lambda1) & (params[1] < max_lambda1) & ( params[0] < max_lambda0) &
             (params[2] > 0) & (params[2] < 1) & (params[3] > 0) & (params[3] < 1) ):
-            return np.log(1/np.sqrt(params[0])/2/np.sqrt(2.5)) + np.log(1/np.sqrt(params[1])/2/np.sqrt(2.5)) 
+            return (np.log(1 / np.sqrt(params[0]) / 2 / (np.sqrt(max_lambda0) - np.sqrt(min_lambda0))) + 
+                    np.log(1 / np.sqrt(params[1]) / 2 / (np.sqrt(max_lambda1) - np.sqrt(min_lambda1))))
         return -np.inf
 
     # define log-probability
@@ -96,8 +109,8 @@ if __name__ == "__main__":
         return log_likelihood_poisson(rate, hist, factorials)
     
     def log_prior_unmod(params):
-        if ((params[0] > 0) & (params[0] < 2.5)):
-            return np.log(1/np.sqrt(params[0])/2/np.sqrt(2.5))
+        if ((params[0] > min_lambda0) & (params[0] < max_lambda0)):
+            return np.log(1 / np.sqrt(params[0]) / 2 / (np.sqrt(max_lambda0) - np.sqrt(min_lambda0)))
         return -np.inf
 
     def log_probability_unmod(params):
@@ -106,47 +119,26 @@ if __name__ == "__main__":
             return -np.inf
         return lp + log_likelihood_unmod(params)
 
-    ranged =  [2.5, 2.5, 500, 500, 100, 100]
+    ranged =  [max_lambda0, max_lambda1, 500, 500, 100, 100]
 
     integrals = 0
     lambda0max, lambda1max, lambda0n, lambda1n, phi0n, dphin = ranged
 
-    lambda0n_split = 5
+    lambda0n_split = 20
     nums = np.arange(0, lambda0n, lambda0n_split)
     print(nums)
-    # for l, num in enumerate(nums):
-    #     print("\n")
-    #     print(l)
 
-        
-    #     phi0 = np.linspace(0, 1, phi0n)
-    #     dphi = np.linspace(0, 1, dphin)
-    #     lambda0s = np.linspace(l, l + 1, lambda0n_split)
-    #     lambda1s = np.linspace(0, lambda1max, lambda1n)
-    #     logls = np.zeros((lambda0n_split,lambda1n,phi0n, dphin))
-    #     for i in range(lambda0n_split):
-    #         print(i)
-    #         for j in range(lambda1n):
-    #             for k in range(phi0n):
-    #                 for l in range(dphin):
-    #                     logl = log_probability_mod([lambda0s[i], lambda1s[j], phi0[k], dphi[l]])
-    #                     logls[i, j, k, l] = logl
-    #     integral = np.trapz(np.trapz(np.trapz(np.trapz(np.exp(logls), dphi), phi0), lambda1s), lambda0s) # trapz integrates over the last axis
-    #     integrals += integral
-
-
-
-    def compute_integral(num, phi0n, dphin, lambda0n_split, lambda0n, lambda0max, lambda1n, lambda1max, log_probability_mod):
+    def compute_integral(num, phi0n, dphin, lambda0n_split, lambda0n, lambda0max, lambda1n, lambda1max, min_lambda0, min_lambda1, log_probability_mod):
         phi0 = np.linspace(0, 1, phi0n)
         dphi = np.linspace(0, 1, dphin)
-        lambda0s = np.linspace(num/lambda0n*lambda0max, (num+lambda0n_split)/lambda0n*lambda0max, lambda0n_split)
-        lambda1s = np.linspace(0, lambda1max, lambda1n)
+        lambda0s = np.linspace(min_lambda0 + num/lambda0n*(lambda0max - min_lambda0), min_lambda0 + (num+lambda0n_split)/lambda0n*(lambda0max - min_lambda0), lambda0n_split)
+        lambda1s = np.linspace(min_lambda1, lambda1max, lambda1n)
         logls = np.zeros((lambda0n_split, lambda1n, phi0n, dphin))
         integral = 1
         print("lambda0: ", lambda0s)
-        print("lambda1: ", lambda1s)
-        print("phi0: ", phi0)
-        print("dphi: ", dphi)
+        # print("lambda1: ", lambda1s)
+        # print("phi0: ", phi0)
+        # print("dphi: ", dphi)
         for i in range(lambda0n_split): 
             print(i)
             for j in range(lambda1n):
@@ -160,12 +152,12 @@ if __name__ == "__main__":
         
         return integral
 
-    def main(nums, phi0n, dphin, lambda0n_split, lambda0n, lambda0max, lambda1n, lambda1max, log_probability_mod):
+    def main(nums, phi0n, dphin, lambda0n_split, lambda0n, lambda0max, lambda1n, lambda1max, min_lambda0, min_lambda1, log_probability_mod):
         integrals = 0
         # Use ProcessPoolExecutor for parallel computation
         with concurrent.futures.ProcessPoolExecutor() as executor:
             # Submit tasks for each l in the nums list
-            futures = [executor.submit(compute_integral, num, phi0n, dphin, lambda0n_split, lambda0n, lambda0max, lambda1n, lambda1max, log_probability_mod) for l, num in enumerate(nums)]
+            futures = [executor.submit(compute_integral, num, phi0n, dphin, lambda0n_split, lambda0n, lambda0max, lambda1n, lambda1max,  min_lambda0, min_lambda1,log_probability_mod) for l, num in enumerate(nums)]
             
             # Wait for all tasks to finish and collect the results
             for future in concurrent.futures.as_completed(futures):
@@ -174,7 +166,7 @@ if __name__ == "__main__":
         return integrals
 
     # Usage example (ensure to pass appropriate parameters):
-    integrals = main(nums, phi0n, dphin, lambda0n_split, lambda0n, lambda0max, lambda1n, lambda1max, log_probability_mod)
+    integrals = main(nums, phi0n, dphin, lambda0n_split, lambda0n, lambda0max, lambda1n, lambda1max,  min_lambda0, min_lambda1,log_probability_mod)
 
 
 

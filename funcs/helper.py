@@ -29,7 +29,7 @@ COLORS = [
     "#1F78B4" # Blue
         ]
 
-def get_tess_orbital_phases(period, split=0.1, by_sector = False):
+def get_tess_orbital_phases(period, split=0.1, by_sector = False, usemask=False, mask=None):
     """Download the TESS light curves for HIP 67522 and calculate the observing 
     time in the first 10% and last 90% of the orbit, or any other split.  
     
@@ -77,13 +77,18 @@ def get_tess_orbital_phases(period, split=0.1, by_sector = False):
 
         tessphases = np.concatenate(tessphases)
         # get the observing time for first 10% and last 90% of the light curve
-        ttess01 = len(tessphases[tessphases < split]) * 2. / 60. / 24.
-        ttess09 = len(tessphases[tessphases > split]) * 2. / 60. / 24.
+        if usemask:
+            m = (tessphases > mask[0]) & (tessphases < mask[1])
+            ttess01 = len(tessphases[m]) * 2. / 60. / 24.
+            ttess09 = len(tessphases[~m]) * 2. / 60. / 24.
+        else:
+            ttess01 = len(tessphases[tessphases < split]) * 2. / 60. / 24.
+            ttess09 = len(tessphases[tessphases > split]) * 2. / 60. / 24.
 
         ttess = ttess01 + ttess09
         return tessphases, ttess01, ttess09, ttess
 
-def get_cheops_orbital_phases(period, midpoint, split=0.1):
+def get_cheops_orbital_phases(period, midpoint, split=0.1, usemask=False, mask=None):
 
     time = np.array([])
     cheopsphases = np.array([])
@@ -110,8 +115,13 @@ def get_cheops_orbital_phases(period, midpoint, split=0.1):
         cheopsphases = np.concatenate([cheopsphases, ((t - midpoint) % period) / period])
 
     tot_obs_time_d_cheops = len(time) * 10. / 60. / 60. / 24.
-    tcheops01 = len(time[cheopsphases < split]) * 10. / 60. / 60. / 24.
-    tcheops09 = len(time[cheopsphases > split]) * 10. / 60. / 60. / 24.
+    if usemask:
+        m = (cheopsphases > mask[0]) & (cheopsphases < mask[1])
+        tcheops01 = len(time[m]) * 10. / 60. / 60. / 24.
+        tcheops09 = len(time[~m]) * 10. / 60. / 60. / 24.
+    else:
+        tcheops01 = len(time[cheopsphases < split]) * 10. / 60. / 60. / 24.
+        tcheops09 = len(time[cheopsphases > split]) * 10. / 60. / 60. / 24.
 
     return cheopsphases, tcheops01, tcheops09, tot_obs_time_d_cheops
 
