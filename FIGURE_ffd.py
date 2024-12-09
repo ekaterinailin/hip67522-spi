@@ -170,6 +170,7 @@ if __name__ == "__main__":
     for ffd, c, l, m in list(zip([tessffd, cheopsffd], 
                             color, legend, marker)):
         ed, freq, counts = ffd.ed_and_freq()
+        
         plt.scatter(ed, freq, c=c, label=l, marker=m)
         
     plt.xscale("log")
@@ -189,6 +190,9 @@ if __name__ == "__main__":
 
     # make a DataFrame with the cheops and tess flare energies and phases
     df = pd.concat([cheopsflares[["ed_rec", "ed_rec_err", "phase"]], hip67522tessffd[["ed_rec", "ed_rec_err", "phase"]]])
+
+    # save to file
+    df.to_csv("../results/flare_phases_and_energies.csv", index=False)
 
     # --------------------------------------------------------------------------------------------
 
@@ -213,7 +217,9 @@ if __name__ == "__main__":
     # FIT A POWER LAW FOR EACH PHASE RANGE ----------------------------------------------------------
 
     df10 = df[df["phase"]<0.1]
-    df90 = df[df["phase"]>0.1]
+    df90 = df[df["phase"]>0.1].sort_values("ed_rec", ascending=True).iloc[1:] # exclude the smallest flare
+
+
     dffull = df.sort_values("ed_rec", ascending=True).iloc[1:] # exclude the smallest flare
     obs10 =  ttess01 + tcheops01
     obs90 =  ttess09 + tcheops09
@@ -229,6 +235,8 @@ if __name__ == "__main__":
     for ffd, c in list(zip([ffd10, ffd90, fullffd], color)):
 
         ed, freq, counts = ffd.ed_and_freq()
+        
+        print(ed, freq)
         # fit power law to each
         bfas.append(ffd.fit_powerlaw("mcmc"))
 
@@ -305,7 +313,7 @@ if __name__ == "__main__":
     plt.yscale("log")
     plt.xlabel("Bolometric Flare Energy [erg]")
     plt.ylabel("cumulative number of flares per day")
-    plt.xlim(1e33, 1e36)
+    plt.xlim(3e33, 1e36)
     plt.ylim(4e-4, 2.2)
 
     plt.tight_layout()
