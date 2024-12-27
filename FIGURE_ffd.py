@@ -225,6 +225,10 @@ if __name__ == "__main__":
     obs90 =  ttess09 + tcheops09
     obsfull = tot_obs_time_d_tess + tot_obs_time_d_cheops 
 
+    with open("../results/total_observing_times.txt", "w") as f:
+        f.write("TESS,CHEOPS,total\n")
+        f.write(f"{tot_obs_time_d_tess},{tot_obs_time_d_cheops},{obsfull}")
+
     ffd10 = FFD(f=df10, tot_obs_time=obs10, ID="phases 0-0.1")
     ffd90 = FFD(f=df90, tot_obs_time=obs90, ID="phases 0.1-1")
     fullffd = FFD(f=dffull, tot_obs_time=obsfull, ID="phases 0-1")
@@ -247,7 +251,7 @@ if __name__ == "__main__":
     # MAKE A FIGURE OF THE FFD FITS ---------------------------------------------------------------
 
     fig, ax = plt.subplots(figsize=(6.5, 5))
-    for ffd, c, BFA in list(zip([ffd10, ffd90, fullffd], color, bfas)):
+    for ffd, c, BFA in list(zip([ffd10, ffd90], color, bfas)):
         ed, freq, counts = ffd.ed_and_freq()
         
 
@@ -302,8 +306,8 @@ if __name__ == "__main__":
                         label='orbital phases 0.0 - 0.1', markerfacecolor='b', markersize=10),
                 plt.Line2D([0], [0], marker='o', color='w', 
                             label='orbital phases 0.1 - 1.0', markerfacecolor='olive', markersize=10),
-                plt.Line2D([0], [0], marker='o', color='w', markerfacecolor='grey', markersize=10,
-                            label='all flares'),
+                # plt.Line2D([0], [0], marker='o', color='w', markerfacecolor='grey', markersize=10,
+                            # label='all flares'),
                 plt.Line2D([0], [0], color='k', 
                             label='posterior draws from power law fit')]
 

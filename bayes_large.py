@@ -6,6 +6,9 @@ from math import factorial
 
 if __name__ == "__main__":
 
+    # decide if you want to run the real deal or fake random flaring
+    fake = False
+
     # read phases from file
     tess_phases = np.loadtxt("tess_phases.txt")
     cheops_phases = np.loadtxt("cheops_phases.txt")
@@ -51,29 +54,33 @@ if __name__ == "__main__":
     def unmodulated_model(lambda0, weight=binned):
         return lambda0 * weight #number of observed flares per bin
     
-    max_lambda0 = 1.
-    max_lambda1 = 1.
+    max_lambda0 = 4.
+    max_lambda1 = 4.
+    min_lambda0 = 0.000
+    min_lambda1 = 0.000
 
-    min_lambda0 = 0.0001
-    min_lambda1 = 0.0001
+    max_dphi = 0.5 # otherwise we're probing the same parameter space twice
 
-    # fake_l = 0.2
-    # rate = unmodulated_model(fake_l)
 
-    # hist = np.array([np.random.poisson(r) for r in rate])
+    if fake:
 
-    # save rate and hist to fake_bayes_factors_samples.txt
-    # with open("fake_bayes_factors_samples.txt", "a") as f:
-    #     string = f"{rate} {hist}\n"
-    #     f.write(string)
-    #     print(string)
+        fake_l = 0.2 # set a fake flare rate
+        rate = unmodulated_model(fake_l) # get flare rates for the unmodulated case
 
-    # print(rate)
+        hist = np.array([np.random.poisson(r) for r in rate]) # make histogram of fake observed flares
 
-    # print(hist)
-    # observed:
-    hist, bins = np.histogram(phases, bins=bins)
-    # define the factorials for the numbers in hist for the likelihood computation
+        # save rate and hist to fake_bayes_factors_samples.txt
+        with open("fake_bayes_factors_samples.txt", "a") as f:
+            string = f"{rate} {hist}\n"
+            f.write(string)
+            print(string)
+
+    else:
+        hist, bins = np.histogram(phases, bins=bins)
+        # define the factorials for the numbers in hist for the likelihood computation
+
+
+    # pre-calculated factorials to save time
     factorials = np.array([factorial(h) for h in hist])
 
     # Poisson log-likelihood function
@@ -90,9 +97,9 @@ if __name__ == "__main__":
 
     def log_prior_mod(params):
         if ((params[0] > min_lambda0) & (params[1] > min_lambda1) & (params[1] < max_lambda1) & ( params[0] < max_lambda0) &
-            (params[2] > 0) & (params[2] < 1) & (params[3] > 0) & (params[3] < 1) ):
+            (params[2] > 0) & (params[2] < 1) & (params[3] > 0) & (params[3] < max_dphi) ):
             return (np.log(1 / np.sqrt(params[0]) / 2 / (np.sqrt(max_lambda0) - np.sqrt(min_lambda0))) + 
-                    np.log(1 / np.sqrt(params[1]) / 2 / (np.sqrt(max_lambda1) - np.sqrt(min_lambda1))))
+                    np.log(1 / np.sqrt(params[1]) / 2 / (np.sqrt(max_lambda1) - np.sqrt(min_lambda1))) + np.log(1/max_dphi))
         return -np.inf
 
     # define log-probability
@@ -119,7 +126,7 @@ if __name__ == "__main__":
             return -np.inf
         return lp + log_likelihood_unmod(params)
 
-    ranged =  [max_lambda0, max_lambda1, 500, 500, 100, 100]
+    ranged =  [max_lambda0, max_lambda1, 500, 500, 100, 50]
 
     integrals = 0
     lambda0max, lambda1max, lambda0n, lambda1n, phi0n, dphin = ranged
@@ -130,11 +137,11 @@ if __name__ == "__main__":
 
     def compute_integral(num, phi0n, dphin, lambda0n_split, lambda0n, lambda0max, lambda1n, lambda1max, min_lambda0, min_lambda1, log_probability_mod):
         phi0 = np.linspace(0, 1, phi0n)
-        dphi = np.linspace(0, 1, dphin)
+        dphi = np.linspace(0, max_dphi, dphin)
         lambda0s = np.linspace(min_lambda0 + num/lambda0n*(lambda0max - min_lambda0), min_lambda0 + (num+lambda0n_split)/lambda0n*(lambda0max - min_lambda0), lambda0n_split)
         lambda1s = np.linspace(min_lambda1, lambda1max, lambda1n)
         logls = np.zeros((lambda0n_split, lambda1n, phi0n, dphin))
-        integral = 1
+        
         print("lambda0: ", lambda0s)
         # print("lambda1: ", lambda1s)
         # print("phi0: ", phi0)
@@ -184,7 +191,9 @@ if __name__ == "__main__":
 
 
     with open("bayes_factor.txt", "a") as f:
-        string = f"{len(phases)},{nbins},{lambda0max},{lambda1max},{lambda0n},{lambda1n},{phi0n},{dphin},{bayes_factor},{integrals},{integralunmod}\n"
+        string = f"{len(phases)},{nbins},{lambda0max},{lambda1max}," \
+                 f"{lambda0n},{lambda1n},{phi0n},{dphin},{bayes_factor}," \
+                 f"{integrals},{integralunmod},{min_lambda0},{min_lambda1}\n"
         f.write(string)
         print(string)
 
