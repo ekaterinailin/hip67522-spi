@@ -25,6 +25,7 @@ import emcee
 import corner
 from math import factorial
 from scipy.optimize import minimize
+import os
 
 import matplotlib.pyplot as plt 
 
@@ -49,26 +50,26 @@ if __name__ == "__main__":
     phases = (phases + 0.5) % 1
 
     # define binning
-    nbins = 201
-    bins = np.linspace(0, 1, nbins)
-    binmids= (bins[1:] + bins[:-1]) / 2
+    nbinedges = int(os.sys.argv[1])
+    binedges = np.linspace(0, 1, nbinedges)
+    binmids= (binedges[1:] + binedges[:-1]) / 2
 
     # assign bin number to each observed phase
-    arr = np.digitize(obs_phases, bins)
+    arr = np.digitize(obs_phases, binedges, right=True)
 
     # sum the observing times in each bin to binned weights
     # unit of entries in binned is [days]
-    binned = np.array([np.sum(weights[arr==i]) for i in range(1, len(bins))]) 
+    binned = np.array([np.sum(weights[arr==i]) for i in range(1, len(binedges))]) 
 
     # define maximum flare rate we could possibly accept based on observations
-    max_lambda0 = 2.
-    max_lambda1 = 2.
+    max_lambda0 = 4.
+    max_lambda1 = 4.
 
     print(f"Prior on lambda0: Jeffrey's in [0, {max_lambda0}]")
     print(f"Prior on lambda1: Jeffrey's in [0, {max_lambda1}]")
 
     # observed numbers of flares per time bin
-    hist, bins = np.histogram(phases, bins=bins)
+    hist, bins = np.histogram(phases, bins=binedges)
 
     # define the factorials for the numbers in hist for the likelihood computation
     factorials = np.array([factorial(h) for h in hist])
@@ -80,7 +81,7 @@ if __name__ == "__main__":
     # make sure you didn't mess up the data somewhere else somehow
     assert len(phases) == 15
     assert 73 < np.sum(binned) < 74
-    assert len(binned) == nbins - 1
+    assert len(binned) == nbinedges - 1
 
     print("Data loaded and preprocessed successfully.")
 
@@ -130,7 +131,7 @@ if __name__ == "__main__":
 
 
     # minimize neg. log-likelihood for a starting point in the mcmc
-    params =  [0.1, .7,  0.30, 0.07]
+    params =  [0.1, .5,  0.50, 0.2]
     logmin = lambda x: -log_likelihood_mod(x)
     res = minimize(logmin, params)
 
@@ -139,17 +140,24 @@ if __name__ == "__main__":
     # plt.xlim(0, 1)
     # plt.legend(frameon=False)   
 
-
-
     # define log-prior with Jeffrey's priors on Poisson rates
     def log_prior_mod(params):
         if ((params[0] > 0) & (params[1] > 0) & 
             (params[1] < max_lambda1) & ( params[0] < max_lambda0) &
-            (params[2] > 0) & (params[2] < 1) & (params[3] > 0) & (params[3] < 1) ):
+            (params[2] > 0) & (params[2] < 1) & (params[3] > 0) & (params[3] < 0.5) ):
             p1 = np.log(1/np.sqrt(params[0]) / 2 / np.sqrt(max_lambda0)) 
             p2 = np.log(1/np.sqrt(params[1]) / 2 / np.sqrt(max_lambda1)) 
-            return p1 + p2
+            p3 = np.log(2)
+            return p1 + p2 + p3
         return -np.inf
+
+    # try with uniform priors instead of Jeffrey's
+    # def log_prior_mod(params):
+    #     if ((params[0] > 0) & (params[1] > 0) & 
+    #         (params[1] < max_lambda1) & ( params[0] < max_lambda0) &
+    #         (params[2] > 0) & (params[2] < 1) & (params[3] > 0) & (params[3] < 0.5) ):
+    #         return np.log(1/8)
+    #     return -np.inf
 
     # define log-probability
     def log_probability_mod(params):
@@ -165,7 +173,7 @@ if __name__ == "__main__":
     pos = params + 1e-4 * np.random.randn(nwalkers, ndim)
 
     mod_sampler = emcee.EnsembleSampler(nwalkers, ndim, log_probability_mod)
-    mod_sampler.run_mcmc(pos, 50000, progress=True)
+    mod_sampler.run_mcmc(pos, 100000, progress=True)
 
     # ---------------------------------------------------------------------------
 
@@ -175,7 +183,7 @@ if __name__ == "__main__":
     # MCMC CHAIN PLOTS -----------------------------------------------------------
 
     fig, axes = plt.subplots(ndim, figsize=(10, 7), sharex=True)
-    mod_samples = mod_sampler.get_chain(discard=10000)
+    mod_samples = mod_sampler.get_chain(discard=80000)
     labels = [r"$\lambda_0$", r"$\lambda_1$", r"$\phi_0$",r"$\Delta\phi$",]
     for i in range(ndim):
         ax = axes[i]
@@ -187,15 +195,18 @@ if __name__ == "__main__":
     axes[-1].set_xlabel("step number")
 
     plt.tight_layout()
-    plt.savefig(f"../plots/poisson_model/{nbins}_chain_modulated.png", dpi=300)
+    plt.savefig(f"../plots/poisson_model/{nbinedges}_chain_modulated.png", dpi=300)
+
+    # save the samples to file
+    np.save(f"../results/{nbinedges}_modulated_samples.npy", mod_samples)
 
     # ----------------------------------------------------------------------------
 
     # ----------------------------------------------------------------------------
     # MCMC CORNER PLOT -----------------------------------------------------------
 
-    # plot corner
-    mod_flat_samples = mod_sampler.get_chain(discard=10000, thin=15, flat=True)
+    # # plot corner
+    mod_flat_samples = mod_sampler.get_chain(discard=80000, thin=15, flat=True)
 
     # increase font size to 20
     plt.rcParams.update({'font.size': 18})
@@ -203,7 +214,18 @@ if __name__ == "__main__":
     fig = corner.corner(mod_flat_samples, labels=labels)
     plt.tight_layout()
 
-    plt.savefig(f"../plots/poisson_model/{nbins}_corner_modulated.png", dpi=300)
+    plt.savefig(f"../plots/poisson_model/{nbinedges}_corner_modulated.png", dpi=300)
+
+    # ----------------------------------------------------------------------------
+
+    # ----------------------------------------------------------------------------
+    # SAVE THE CHAIN -------------------------------------------------------------
+
+    # make the flat samples a pandas dataframe
+    df = pd.DataFrame(mod_flat_samples, columns=["l0", "l1", "phi0", "dphi"])
+
+    # save to file
+    df.to_csv(f"../results/modulated_samples.csv", index=False)
 
     # ----------------------------------------------------------------------------
 
@@ -216,10 +238,10 @@ if __name__ == "__main__":
     phi0_mcmc = np.percentile(mod_flat_samples[:, 2], [16, 50, 84])
     dphi_mcmc = np.percentile(mod_flat_samples[:, 3], [16, 50, 84])
 
-    print("lambda0:", lambda0_mcmc[1], "+", lambda0_mcmc[2] - lambda0_mcmc[1], "-", lambda0_mcmc[1] - lambda0_mcmc[0])
-    print("lambda1:", lambda1_mcmc[1], "+", lambda1_mcmc[2] - lambda1_mcmc[1], "-", lambda1_mcmc[1] - lambda1_mcmc[0])
-    print("phi0:", phi0_mcmc[1], "+", phi0_mcmc[2] - phi0_mcmc[1], "-", phi0_mcmc[1] - phi0_mcmc[0])
-    print("dphi:", dphi_mcmc[1], "+", dphi_mcmc[2] - dphi_mcmc[1], "-", dphi_mcmc[1] - dphi_mcmc[0])
+    print(f"lambda0: {lambda0_mcmc[1]:.2f} + {lambda0_mcmc[2] - lambda0_mcmc[1]:.2f} - {lambda0_mcmc[1] - lambda0_mcmc[0]:.2f}")
+    print(f"lambda1: {lambda1_mcmc[1]:.2f} + {lambda1_mcmc[2] - lambda1_mcmc[1]:.2f} - {lambda1_mcmc[1] - lambda1_mcmc[0]:.2f}")
+    print(f"phi0: {phi0_mcmc[1]:.2f} + {phi0_mcmc[2] - phi0_mcmc[1]:.2f} - {phi0_mcmc[1] - phi0_mcmc[0]:.2f}")
+    print(f"dphi: {dphi_mcmc[1]:.2f} + {dphi_mcmc[2] - dphi_mcmc[1]:.2f} - {dphi_mcmc[1] - dphi_mcmc[0]:.2f}")
 
     mod_best_median = [lambda0_mcmc[1], lambda1_mcmc[1], phi0_mcmc[1], dphi_mcmc[1]]
 
@@ -246,6 +268,13 @@ if __name__ == "__main__":
         if ((params[0] > 0) & (params[0] < max_lambda0)):
             return np.log(1 / np.sqrt(params[0]) / 2 / np.sqrt(max_lambda0))
         return -np.inf
+
+    # try uniform priors instead of Jeffrey's
+    # def log_prior_unmod(params):
+    #     if ((params[0] > 0) & (params[0] < max_lambda0)):
+    #         return np.log(1/4)
+    #     return -np.inf
+
 
     def log_probability_unmod(params):
         lp = log_prior_unmod(params)
@@ -277,7 +306,7 @@ if __name__ == "__main__":
     axes.yaxis.set_label_coords(-0.05, 0.5)
     axes.set_xlabel("step number")
     plt.tight_layout()
-    plt.savefig(f"../plots/poisson_model/{nbins}_chain_unmodulated.png", dpi=300)
+    plt.savefig(f"../plots/poisson_model/{nbinedges}_chain_unmodulated.png", dpi=300)
 
     # ---------------------------------------------------------------------------
 
@@ -285,14 +314,14 @@ if __name__ == "__main__":
     # GET BEST FIT PARAMETERS ----------------------------------------------------
 
     # Unmodulated model best_fit result and histogram
-    unmod_flat_samples = unmod_sampler.get_chain(discard=4000, thin=15, flat=True)
+    unmod_flat_samples = unmod_sampler.get_chain(discard=5000, thin=15, flat=True)
 
     # calculate the 16th, 50th and 84th percentiles for all parameters
     lambda0_mcmc = np.percentile(unmod_flat_samples[:, 0], [16, 50, 84])
 
     unmod_best_median = [lambda0_mcmc[1]]
 
-    print("lambda0:", lambda0_mcmc[1] ,lambda0_mcmc[2]-lambda0_mcmc[1],  lambda0_mcmc[1]-lambda0_mcmc[0])
+    print(f"lambda0 {lambda0_mcmc[1]:.2f} + {lambda0_mcmc[2] - lambda0_mcmc[1]:.2f} - {lambda0_mcmc[1] - lambda0_mcmc[0]:.2f}")
 
     # save to file
     df["lambda0_unmod"] = lambda0_mcmc
@@ -306,9 +335,18 @@ if __name__ == "__main__":
     # corner plot
     fig = corner.corner(unmod_flat_samples, labels=[unmod_label])
     plt.tight_layout()
-    plt.savefig(f"../plots/poisson_model/{nbins}_corner_unmodulated.png", dpi=300)
+    plt.savefig(f"../plots/poisson_model/{nbinedges}_corner_unmodulated.png", dpi=300)
 
     # ----------------------------------------------------------------------------
+
+    # ----------------------------------------------------------------------------
+    # SAVE THE CHAIN -------------------------------------------------------------
+
+    # make the flat samples a pandas dataframe
+    df = pd.DataFrame(unmod_flat_samples, columns=["l0"])
+
+    # save to file
+    df.to_csv(f"../results/unmodulated_samples.csv", index=False)
 
     # ----------------------------------------------------------------------------
     # PLOT BOTH MODELS -----------------------------------------------------------
@@ -327,7 +365,9 @@ if __name__ == "__main__":
     plt.xlim(0,1)
     plt.ylabel("Number of flares")
     plt.tight_layout()
-    plt.savefig(f"../plots/poisson_model/{nbins}_best_median_fit.png", dpi=300)
+    plt.savefig(f"../plots/poisson_model/{nbinedges}_best_median_fit.png", dpi=300)
+
+
 
     # ----------------------------------------------------------------------------
 
@@ -361,8 +401,8 @@ if __name__ == "__main__":
     # get the log likelihoods for the best fit solutions
     logmod, logunmod = log_likelihood_mod(mod_best_median), log_likelihood_unmod(unmod_best_median)
 
-    BICmod = -2 * logmod + 4 * np.log(len(hist))
-    BICunmod = -2 * logunmod + 2 * np.log(len(hist))
+    BICmod = -2 * logmod + 4 * np.log(len(phases)) # number of bins is arbitrary, so use number of flares instead
+    BICunmod = -2 * logunmod + 1 * np.log(len(phases)) # number of bins is arbitrary, so use number of flares instead
 
 
     AICmod = -2 * logmod + 2 * 4
@@ -391,4 +431,16 @@ if __name__ == "__main__":
         print(f"Delta BIC: {BICmod - BICunmod}")
 
     # -----------------------------------------------------------------------------------
+
+    # save nbins,AICmod,AICunmod,BICmod,BICunmod,exp((AICmod - AICunmod) / 2),logmod,logunmod,
+    # lambda0_mcmc[1],lambda1_mcmc[1],phi0_mcmc[1],dphi_mcmc[1],lambda0_mcmc[1],unmod_best_median[0]
+
+    # save to file if needed
+
+    # with open("../results/bestfit_parameters.txt", "a") as f:
+    #     # f.write("nbins,AICmod,AICunmod,deltaAIC,BICmod,BICunmod,exp((AICmod - AICunmod) / 2),logmod,logunmod," +
+    #     #         "lambda0,lambda1,phi0,dphi,lambda0_unmod\n")
+    #     f.write(f"{nbinedges},{AICmod},{AICunmod},{AICmod-AICunmod},{BICmod},{BICunmod},{np.exp((AICmod - AICunmod) / 2)},{logmod},{logunmod},")
+    #     f.write(f"{lambda0_mcmc[1]},{lambda1_mcmc[1]},{phi0_mcmc[1]},{dphi_mcmc[1]},{lambda0_mcmc[1]},{unmod_best_median[0]}\n")
+
 
