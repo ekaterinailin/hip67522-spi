@@ -70,10 +70,13 @@ if __name__ == '__main__':
 
     flares = pd.read_csv(location)
 
-    # remove indices 2,3,4
-    flares = flares.drop([2, 3, 4])
-
     for i, row in flares.iterrows():
+
+        # drop these flares because we will treat them together will flare 2 which is close in time
+        if i == 3 or i == 4:
+            continue
+
+
         sector = row.qcs
         tstart, tstop = row.tstart, row.tstop
 
@@ -83,8 +86,6 @@ if __name__ == '__main__':
         # get LC data
         hdu = fits.open(f"../data/tess/tess_hip67522_{sector}.fits")
 
-
-        # print(hdu[1].header)
         t = hdu[1].data["TIME"]
         f = hdu[1].data["PDCSAP_FLUX"]
         ferr = hdu[1].data["PDCSAP_FLUX_ERR"]
@@ -93,33 +94,63 @@ if __name__ == '__main__':
         # make sure the data is in fact 2-min cadence
         assert np.diff(t[np.isfinite(t)]).min() * 24 * 60 * 60 < 121, "Time series is not 2min cadence"
 
-        # initial mask
-        total_mask_buffer = 0.25 # 12 h
-        init_mask = ((flag==0) & 
-                     np.isfinite(t) &
-                     np.isfinite(f) & 
-                     np.isfinite(ferr) &
-                     (~np.isnan(t)) &  
-                        (~np.isnan(f)) &
-                        (~np.isnan(ferr)) &
-                     (t > tstart - total_mask_buffer) & 
-                     (t < tstop + total_mask_buffer))
-        
-        print(f"Initial mask: {np.where(~init_mask)[0].shape[0]} data points")
+        buffer = 30 / 60 / 24 # 30 minutes
 
-        # define flare mask
-        buffer = 15 / 60 / 24 # 15 minutes
-        flare_mask = (t > tstart - buffer*2) & (t < tstop + buffer*4)
-        print(f"Flare mask: {np.where(flare_mask)[0].shape[0]} data points")
+        # define big mask spanning all three flares under indices 2,3,4
+        if i == 2:
+            big_init_mask = ((flag==0) &
+                                np.isfinite(t) &
+                                np.isfinite(f) &
+                                np.isfinite(ferr) &
+                                (~np.isnan(t)) &
+                                (~np.isnan(f)) &
+                                (~np.isnan(ferr)) &
+                                (t > flares.tstart[2] - total_mask_buffer + 0.05) & # bit of tinkering here to a wide enough
+                                (t < flares.tstop[4] + total_mask_buffer + 0.2 )) # but not too wide mask
 
+            print(f"Big initial mask: {np.where(~big_init_mask)[0].shape[0]} data points")
 
+            big_flare_mask = ((t > flares.tstart[2] - buffer * 1.45) &
+                              (t < flares.tstop[4] + buffer * 4) &
+                             ~((t>2335.05) & (t<2335.16)))
+            print(f"Big flare mask: {np.where(big_flare_mask)[0].shape[0]} data points")
 
-        # define flare light curve
-        tflare, fflare, ferrflare, flagflare = [arr[flare_mask & init_mask] for arr in [t, f, ferr, flag]]
+            # define flare light curve
+            tflare, fflare, ferrflare, flagflare = [arr[big_flare_mask & big_init_mask] for arr in [t, f, ferr, flag]]
 
+            # apply the mask
+            t, f, ferr, flag = [arr[big_init_mask & ~big_flare_mask] for arr in [t, f, ferr, flag]]
 
-        # apply the mask
-        t, f, ferr, flag = [arr[init_mask & ~flare_mask] for arr in [t, f, ferr, flag]]
+        else:
+
+            # initial mask
+            total_mask_buffer = 0.35 # d
+            init_mask = ((flag==0) & 
+                        np.isfinite(t) &
+                        np.isfinite(f) & 
+                        np.isfinite(ferr) &
+                        (~np.isnan(t)) &  
+                            (~np.isnan(f)) &
+                            (~np.isnan(ferr)) &
+                        (t > tstart - total_mask_buffer) & 
+                        (t < tstop + total_mask_buffer))
+            
+            print(f"Initial mask: {np.where(~init_mask)[0].shape[0]} data points")
+
+            # define flare mask
+
+            if row.ampl_rec < 0.03:
+                factor_end = 2
+            else:
+                factor_end = 8
+            flare_mask = (t > tstart - buffer) & (t < tstop + buffer*factor_end) 
+            print(f"Flare mask: {np.where(flare_mask)[0].shape[0]} data points")
+
+            # define flare light curve
+            tflare, fflare, ferrflare, flagflare = [arr[flare_mask & init_mask] for arr in [t, f, ferr, flag]]
+
+            # apply the mask
+            t, f, ferr, flag = [arr[init_mask & ~flare_mask] for arr in [t, f, ferr, flag]]
 
         t = t.astype(float)
         f = f.astype(float)
@@ -127,13 +158,11 @@ if __name__ == '__main__':
         flag = flag.astype(int)
        
 
-        
-        print(type(t))
-
         # PLOT THE INITIAL LIGHT CURVE -------------------------------------------------
 
         plt.figure(figsize=(10, 5))
         plt.plot(t, f, ".", markersize=1)
+        plt.plot(tflare, fflare, ".", markersize=6, color="red")
 
         plt.xlabel(time_label)
         plt.ylabel(flux_label)
@@ -157,10 +186,6 @@ if __name__ == '__main__':
         params.w = 199.1                       #longitude of periastron (in degrees)
         params.u = [0.22, 0.27]                #limb darkening coefficients [u1, u2]
         params.limb_dark = "quadratic"       #limb darkening model
-
-        # print the parameters
-        print("Batman transit parameters from Barber et al. 2024:")
-        print(vars(params))
 
         m = batman.TransitModel(params, t)    #initializes model
 
@@ -383,8 +408,8 @@ if __name__ == '__main__':
                         "flag": flag, "transit_mask": transit_mask})
 
         # new PIPE
-        df.to_csv(f"../data/hip67522/pipe_HIP67522/HIP67522_detrended_lc_{i}_{sector}.csv", index=False)
+        df.to_csv(f"../data/tess/HIP67522_detrended_lc_{i}_{sector}.csv", index=False)
 
         # WRITE THE INITAL MASK TO A txt FILE ------------------------------------------
 
-        np.savetxt(f"../data/hip67522/pipe_HIP67522/HIP6752_{i}_{sector}_mask.txt", init_mask, fmt="%d")
+        np.savetxt(f"../data/tess/HIP6752_{i}_{sector}_mask.txt", init_mask, fmt="%d")
