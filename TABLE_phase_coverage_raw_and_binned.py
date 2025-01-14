@@ -73,7 +73,22 @@ if __name__ == "__main__":
     assert sumd["Exposure time [d]"].sum() < 73.3
 
 
-    string = sumd.to_latex(column_format='@{}ll@{}', index=False, escape=False)
+    # split the table into two columns
+    second_col = sumd.iloc[50:]
+    sumd = sumd.iloc[:50]
+
+
+
+    sumd["Orb. phase 9 9 9 "] = second_col["Orb. phase"].values
+    sumd["Exposure time [d] 9 9 9 "] = second_col["Exposure time [d]"].values
+
+    print(sumd.head())
+
+
+    string = sumd.to_latex(column_format='@{}llll@{}', index=False, escape=False)
+
+    # remove 9 9 9 from column names
+    string = string.replace(" 9 9 9 ", "")
 
 
     print("\nExtended Data Table: Phase coverage\n")

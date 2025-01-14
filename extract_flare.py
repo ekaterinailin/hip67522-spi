@@ -62,7 +62,7 @@ if __name__ == "__main__":
     tmin = row.tmin
     tmax = row.tmax
     t_peak = row.t_peak
-    parametrization = row.parametrization
+    parametrization = "mendoza2022"
     two_flare = row.two_flare   
 
     # extend the flare region using tmin and tmax
@@ -135,20 +135,21 @@ if __name__ == "__main__":
 
     def log_prior(theta):
         t_peak, dur, ampl = theta
-        if (t_flare[0] < t_peak < t_flare[-1]) and (0.0 < dur < 0.1) and (0.001 < ampl < 1e7):
+        if (t_flare[0] < t_peak < t_flare[-1]) and (0.0 < dur < 0.1) and (0.001 < ampl < newmed):
             return 0.0
         return -np.inf
 
     def log_probability(theta, t, f, ferrstd):
         lp = log_prior(theta)
-        if not np.isfinite(lp):
+        logl = log_likelihood(theta, t, f, ferrstd)
+        if (not np.isfinite(lp)) or (not np.isfinite(logl)):
             return -np.inf
-        return lp + log_likelihood(theta, t, f, ferrstd)
+        return lp + logl
 
     # define the number of dimensions, walkers, and steps
     ndim = 3
     nwalkers = 32
-    nsteps = 4000
+    nsteps = 100000
 
     # define the initial position of the walkers
     pos = popt + 1e-4 * np.random.randn(nwalkers, ndim)
@@ -181,7 +182,7 @@ if __name__ == "__main__":
     # SHOW THE CORNER PLOT -----------------------------------------------------------
 
     # get the flat samples
-    flat_samples = sampler.get_chain(discard=1000, thin=15, flat=True)
+    flat_samples = sampler.get_chain(discard=90000, thin=15, flat=True)
 
     # plot the corner plot
     fig = corner.corner(flat_samples, labels=labels)
@@ -221,7 +222,9 @@ if __name__ == "__main__":
         flc.it_med = newmed
         flc.detrended_flux = f_interpolate
         ed = equivalent_duration(flc, 0, len(t_interpolate)-1)  
-        eds.append(ed)
+
+        if ed < 0.2:
+            eds.append(ed)
 
     # plot the flare region on top
     plt.plot(t_flare, f_flare+newmed, ".", markersize=1, color="black")
@@ -260,10 +263,10 @@ if __name__ == "__main__":
         # get the initial guess
         tpeak2 = t_peak + 0.01
         dur2 = 0.02
-        ampl2 = 0.04*newmed
+        ampl2 = 0.02*newmed
 
         # fit the two-flare model
-        popt, pcov = curve_fit(flare_fit_model, t_flare, f_flare, p0=[t_peak, dur, ampl, t_peak, dur, ampl])
+        popt, pcov = curve_fit(flare_fit_model, t_flare, f_flare, p0=[t_peak, dur, ampl, tpeak2, dur2, ampl2])
 
         print("Fitted two-flare parameters:")
         print(popt)
@@ -287,9 +290,10 @@ if __name__ == "__main__":
 
         def log_probability(theta, t, f, ferrstd):
             lp = log_prior(theta)
-            if not np.isfinite(lp):
+            logl = log_likelihood(theta, t, f, ferrstd)
+            if (not np.isfinite(lp)) or (not np.isfinite(logl)):
                 return -np.inf
-            return lp + log_likelihood(theta, t, f, ferrstd)
+            return lp + logl
 
         # define the number of dimensions, walkers, and steps
         ndim = 6
