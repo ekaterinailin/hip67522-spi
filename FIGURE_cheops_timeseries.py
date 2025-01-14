@@ -87,7 +87,7 @@ if __name__ == "__main__":
         ax1.set_xlim(ax2.get_xlim())
 
         
-        flataxes[idup].scatter(dlcs[original_idx]["time"], dlcs[original_idx]["masked_raw_flux"] , s=1, color="grey", label="CHEOPS")
+        flataxes[idup].scatter(dlcs[original_idx]["time"], dlcs[original_idx]["masked_raw_flux"] , s=1, color="steelblue", label="CHEOPS")
         flataxes[idup].plot(dlcs[original_idx]["time"], dlcs[original_idx]["model"], color="orange", label="Model")
 
         # mark transits with a grey axvspan if in the transit_mask range
@@ -97,17 +97,17 @@ if __name__ == "__main__":
             print(mask[0], mask[-1])
             mintrans, maxtrans = dlcs[original_idx].iloc[mask[0]], dlcs[original_idx].iloc[mask[-1]]
             print(mintrans["time"], maxtrans["time"])
-            flataxes[idup].axvspan(mintrans["time"], maxtrans["time"], color="grey", alpha=0.3, 
+            flataxes[idup].axvspan(mintrans["time"], maxtrans["time"], color="steelblue", alpha=0.3, 
                                    zorder=-10)
             # Plot the second "bottom" subplot (even rows in the new grid)
     
-        flataxes[iddown].scatter(dlcs[original_idx]["time"], dlcs[original_idx]["flux"], s=1, color="k", label="CHEOPS")
+        flataxes[iddown].scatter(dlcs[original_idx]["time"], dlcs[original_idx]["flux"], s=1, color="navy", label="CHEOPS")
         
     
         # Mark flares if they are within the time range of the current light curve
         for flare in flares[(flares["tmin"] > dlcs[original_idx]["time"].min()) & 
                             (flares["tmax"] < dlcs[original_idx]["time"].max())].iterrows():
-            flataxes[iddown].axvspan(flare[1]["tmin"], flare[1]["tmax"], color="red", alpha=0.3, zorder=-10)
+            flataxes[iddown].axvspan(flare[1]["tmin"], flare[1]["tmax"], color="peru", alpha=0.3, zorder=-10)
 
 
     # # only set y label for the first column
