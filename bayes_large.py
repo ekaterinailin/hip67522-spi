@@ -4,6 +4,8 @@ import concurrent.futures
 
 from math import factorial
 
+import os
+
 if __name__ == "__main__":
 
     # decide if you want to run the real deal or fake random flaring
@@ -29,7 +31,8 @@ if __name__ == "__main__":
     phases = (phases + 0.5) % 1
 
     # define binning
-    nbins = 100
+    # read nbins from command line argument 1
+    nbins = int(os.sys.argv[1])
     bins = np.linspace(0, 1, nbins)
     binmids= (bins[1:] + bins[:-1]) / 2
 
@@ -54,8 +57,8 @@ if __name__ == "__main__":
     def unmodulated_model(lambda0, weight=binned):
         return lambda0 * weight #number of observed flares per bin
     
-    max_lambda0 = 4.
-    max_lambda1 = 4.
+    max_lambda0 = 2.
+    max_lambda1 = 2.
     min_lambda0 = 0.000
     min_lambda1 = 0.000
 
@@ -96,13 +99,20 @@ if __name__ == "__main__":
         return log_likelihood_poisson(rate, hist, factorials)
 
     def log_prior_mod(params):
-        if ((params[0] > min_lambda0) & (params[1] > min_lambda1) & (params[1] < max_lambda1) & ( params[0] < max_lambda0) &
-            (params[2] > 0) & (params[2] < 1) & (params[3] > 0) & (params[3] < max_dphi) ):
+        if ((params[0] > min_lambda0) & (params[1] > min_lambda1) & (params[1] <= max_lambda1) & ( params[0] <= max_lambda0) &
+            (params[2] > 0) & (params[2] <= 1) & (params[3] > 0) & (params[3] <= max_dphi) ):
             return (np.log(1 / np.sqrt(params[0]) / 2 / (np.sqrt(max_lambda0) - np.sqrt(min_lambda0))) + 
                     np.log(1 / np.sqrt(params[1]) / 2 / (np.sqrt(max_lambda1) - np.sqrt(min_lambda1))) + np.log(1/max_dphi))
         return -np.inf
+    
+    # flat prior
+    # def log_prior_mod(params):
+    #     if ((params[0] > min_lambda0) & (params[1] > min_lambda1) & (params[1] <= max_lambda1) & ( params[0] <= max_lambda0) &
+    #         (params[2] > 0) & (params[2] <= 1) & (params[3] > 0) & (params[3] <= max_dphi) ):
+    #         return np.log(1/8)
+    #     return -np.inf
 
-    # define log-probability
+    # log-probability
     def log_probability_mod(params):
         lp = log_prior_mod(params)
         if not np.isfinite(lp):
@@ -116,9 +126,15 @@ if __name__ == "__main__":
         return log_likelihood_poisson(rate, hist, factorials)
     
     def log_prior_unmod(params):
-        if ((params[0] > min_lambda0) & (params[0] < max_lambda0)):
+        if ((params[0] > min_lambda0) & (params[0] <= max_lambda0)):
             return np.log(1 / np.sqrt(params[0]) / 2 / (np.sqrt(max_lambda0) - np.sqrt(min_lambda0)))
         return -np.inf
+
+    # flat prior    
+    # def log_prior_unmod(params):
+    #     if ((params[0] > min_lambda0) & (params[0] <= max_lambda0)):
+    #         return np.log(1/4)
+    #     return -np.inf
 
     def log_probability_unmod(params):
         lp = log_prior_unmod(params)
@@ -126,19 +142,21 @@ if __name__ == "__main__":
             return -np.inf
         return lp + log_likelihood_unmod(params)
 
-    ranged =  [max_lambda0, max_lambda1, 500, 500, 100, 50]
+    ranged =  [max_lambda0, max_lambda1, 400, 400, 100, 50]
 
     integrals = 0
     lambda0max, lambda1max, lambda0n, lambda1n, phi0n, dphin = ranged
 
-    lambda0n_split = 20
+    lambda0n_split = 10
     nums = np.arange(0, lambda0n, lambda0n_split)
     print(nums)
 
     def compute_integral(num, phi0n, dphin, lambda0n_split, lambda0n, lambda0max, lambda1n, lambda1max, min_lambda0, min_lambda1, log_probability_mod):
         phi0 = np.linspace(0, 1, phi0n)
         dphi = np.linspace(0, max_dphi, dphin)
-        lambda0s = np.linspace(min_lambda0 + num/lambda0n*(lambda0max - min_lambda0), min_lambda0 + (num+lambda0n_split)/lambda0n*(lambda0max - min_lambda0), lambda0n_split)
+        lambda0s = np.linspace(min_lambda0 + num/lambda0n*(lambda0max - min_lambda0), 
+                               min_lambda0 + (num+lambda0n_split)/lambda0n*(lambda0max - min_lambda0), 
+                               lambda0n_split)
         lambda1s = np.linspace(min_lambda1, lambda1max, lambda1n)
         logls = np.zeros((lambda0n_split, lambda1n, phi0n, dphin))
         
@@ -147,7 +165,7 @@ if __name__ == "__main__":
         # print("phi0: ", phi0)
         # print("dphi: ", dphi)
         for i in range(lambda0n_split): 
-            print(i)
+            print(i, nbins)
             for j in range(lambda1n):
                 for k in range(phi0n):
                     for l in range(dphin):
@@ -159,12 +177,15 @@ if __name__ == "__main__":
         
         return integral
 
-    def main(nums, phi0n, dphin, lambda0n_split, lambda0n, lambda0max, lambda1n, lambda1max, min_lambda0, min_lambda1, log_probability_mod):
+    def main(nums, phi0n, dphin, lambda0n_split, lambda0n, lambda0max,
+             lambda1n, lambda1max, min_lambda0, min_lambda1, log_probability_mod):
         integrals = 0
         # Use ProcessPoolExecutor for parallel computation
         with concurrent.futures.ProcessPoolExecutor() as executor:
             # Submit tasks for each l in the nums list
-            futures = [executor.submit(compute_integral, num, phi0n, dphin, lambda0n_split, lambda0n, lambda0max, lambda1n, lambda1max,  min_lambda0, min_lambda1,log_probability_mod) for l, num in enumerate(nums)]
+            futures = [executor.submit(compute_integral, num, phi0n, dphin, 
+                                       lambda0n_split, lambda0n, lambda0max, lambda1n, 
+                                       lambda1max,  min_lambda0, min_lambda1,log_probability_mod) for l, num in enumerate(nums)]
             
             # Wait for all tasks to finish and collect the results
             for future in concurrent.futures.as_completed(futures):
@@ -173,14 +194,12 @@ if __name__ == "__main__":
         return integrals
 
     # Usage example (ensure to pass appropriate parameters):
-    integrals = main(nums, phi0n, dphin, lambda0n_split, lambda0n, lambda0max, lambda1n, lambda1max,  min_lambda0, min_lambda1,log_probability_mod)
-
-
-
+    integrals = main(nums, phi0n, dphin, lambda0n_split, lambda0n, lambda0max,
+                    lambda1n, lambda1max,  min_lambda0, min_lambda1,log_probability_mod)
 
 
     logsunmod = np.zeros(lambda0n)
-    lambda0s = np.linspace(0, lambda0max, lambda0n)
+    lambda0s = np.linspace(min_lambda0, lambda0max, lambda0n)
     print(lambda0s)
     for i in range(lambda0n):
         logl = log_probability_unmod([lambda0s[i]])
@@ -190,7 +209,7 @@ if __name__ == "__main__":
     bayes_factor = integrals / integralunmod
 
 
-    with open("bayes_factor.txt", "a") as f:
+    with open("bayes_factor_factor2.txt", "a") as f:
         string = f"{len(phases)},{nbins},{lambda0max},{lambda1max}," \
                  f"{lambda0n},{lambda1n},{phi0n},{dphin},{bayes_factor}," \
                  f"{integrals},{integralunmod},{min_lambda0},{min_lambda1}\n"
