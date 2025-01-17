@@ -62,8 +62,8 @@ if __name__ == "__main__":
     binned = np.array([np.sum(weights[arr==i]) for i in range(1, len(binedges))]) 
 
     # define maximum flare rate we could possibly accept based on observations
-    max_lambda0 = 4.
-    max_lambda1 = 4.
+    max_lambda0 = 2.
+    max_lambda1 = 2.
 
     print(f"Prior on lambda0: Jeffrey's in [0, {max_lambda0}]")
     print(f"Prior on lambda1: Jeffrey's in [0, {max_lambda1}]")
@@ -135,10 +135,6 @@ if __name__ == "__main__":
     logmin = lambda x: -log_likelihood_mod(x)
     res = minimize(logmin, params)
 
-    # plt.plot(binmids, modulated_model(binmids, *res.x, weight=binned), label="model")
-    # plt.plot(binmids, hist, label="observed")
-    # plt.xlim(0, 1)
-    # plt.legend(frameon=False)   
 
     # define log-prior with Jeffrey's priors on Poisson rates
     def log_prior_mod(params):
