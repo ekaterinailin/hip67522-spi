@@ -428,10 +428,10 @@ if __name__ == "__main__":
     Emin = flares.mean_bol_energy.iloc[1] * u.erg
 
     # flux in excess of lambda0
-    lambd = 0.46 / u.d
+    lambd = 0.5 / u.d
 
     # power law exponent of FFD
-    alpha = 1.8
+    alpha = 1.5
 
     # planet radius in units of stellar radii
     rp_in_stars = 0.0668
@@ -507,7 +507,7 @@ if __name__ == "__main__":
 
 
     # define a range of maximum flare energies
-    Emaxs = np.logspace(34, 40, 100) 
+    Emaxs = np.logspace(35, 38, 100) 
 
     # calculate beta of power law based on rate at threshold
     beta = lambd * (alpha -1) / (Emin**(1-alpha)) 
