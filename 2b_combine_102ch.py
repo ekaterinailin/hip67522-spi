@@ -56,4 +56,4 @@ if __name__ == '__main__':
     plt.savefig("plots/diagnostic/HIP67522_102ch_detrended_lc_combined.png")
 
     # write df to a new csv file
-    df.to_csv("../data/hip67522/pipe_HIP67522/HIP67522_102ch_detrended_lc.csv", index=False)
+    df.to_csv("results/cheops/HIP67522_102ch_detrended_lc.csv", index=False)

@@ -68,8 +68,9 @@ def get_tess_orbital_phases(period, sectors,  midpoints ):
 
 
 def get_cheops_orbital_phases(period, midpoint):
-    """Grab the CHEOPS light curves for HIP 67522 and calculate the orbital phases.
-
+    """Grab the CHEOPS light curves for HIP 67522 and calculate the orbital phases. 
+    No need to mask because that's done in the detrending step.
+    
     Parameters
     ----------
     period : float
@@ -93,7 +94,7 @@ def get_cheops_orbital_phases(period, midpoint):
     # read in all the de-trended light curves
     dlcs = []
     for pi, file in files:
-        location = f"data/cheops/HIP67522_{file}{pi}_detrended_lc.csv"
+        location = f"results/cheops/HIP67522_{file}{pi}_detrended_lc.csv"
         dlcs.append(pd.read_csv(location))
 
     for dlc in dlcs:
@@ -112,7 +113,7 @@ def get_cheops_orbital_phases(period, midpoint):
 
 if __name__ == "__main__":
 
-    hip67522params = pd.read_csv("../data/hip67522_params.csv")
+    hip67522params = pd.read_csv("data/hip67522_params.csv")
 
     period = hip67522params[hip67522params.param=="orbper_d"].val.values[0]
     
@@ -121,14 +122,14 @@ if __name__ == "__main__":
     # GET OBSERVED CHEOPS PHASES ---------------------------------------------------------------
 
     midpoint = hip67522params[hip67522params.param=="midpoint_BJD"].val.values[0]
-    cheops_phases, _, _, _ = get_cheops_orbital_phases(period, midpoint)
+    cheops_phases = get_cheops_orbital_phases(period, midpoint)
 
 
     # GET OBSERVED TESS PHASES ---------------------------------------------------------------
 
     # predictions from Rizzuto et al. 2020 using the NASA prediction tool for simplicity for each Sector
     sector_midpoints = [2458694.49725,2459425.24506,2460155.99288] 
-    tess_phases, ttess01, ttess09, ttess = get_tess_orbital_phases(period, [11, 38, 64], sector_midpoints) 
+    tess_phases = get_tess_orbital_phases(period, [11, 38, 64], sector_midpoints) 
 
     # write phases to file
     np.savetxt("data/tess_phases.txt", tess_phases)
