@@ -1,8 +1,14 @@
-# -*- coding: utf-8 -*-
 """
-@author: Ekaterina Ilin, 2024, ilin@astron.nl
+UTF-8, Python 3.11.7
 
-This script is used to detrend the light curves after 
+------------
+HIP 67522
+------------
+
+Ekaterina Ilin, 2025, MIT License, ilin@astron.nl
+
+
+This script is used to detrend the CHEOPS light curves after 
 the imagette data cubes have been reduced with PIPE.
 """
 
@@ -26,12 +32,12 @@ warnings.filterwarnings("ignore")
 
 # capture the screen output to file
 import sys
+import os
 
 
 
 flux_label = r"Flux [e$^{-}$/s]"
 time_label = "Time [BJD]"
-
 
 
 
@@ -68,15 +74,19 @@ if __name__ == '__main__':
     pi = sys.argv[1]
     file = sys.argv[2]
 
-    sys.stdout = open(f"../plots/{file}{pi}/detrending.log", "w")
+    try:
+        add = sys.argv[3]
+        print(f"Detrend light curve segment {add}.")
+    except:
+        print("Detrend full light curve.")
+        add = ""
 
     # new PIPE resulst
-    IMG = f'../data/hip67522/pipe_HIP67522/HIP67522{pi}_{file}_im.fits'
+    IMG = f'data/cheops/HIP67522{pi}_{file}_im.fits'
 
     # make a folder in the plots directory for each file
-    import os
-    if not os.path.exists(f"../plots/{file}{pi}/flares"):
-        os.makedirs(f"../plots/{file}{pi}/flares")
+    if not os.path.exists(f"plots/diagnostic/{file}{pi}"):
+        os.makedirs(f"plots/diagnostic/{file}{pi}")
 
 
     # open the fits file
@@ -97,17 +107,25 @@ if __name__ == '__main__':
     # make sure the data is in fact 10s cadence
     assert np.diff(t).min() * 24 * 60 * 60 < 10.05, "Time series is not 10s cadence"
 
-    # initial mask
-    init_mask = (f < 2.96e6) & (f > 2.3e6) & (flag==0) #& (t >2460413.25) #only for the 102ch flare fit bc the polynomial is slightly off there
+    # initial mask -- outliers and flagged data points
+    init_mask = (f < 2.96e6) & (f > 2.3e6) & (flag==0) #& 
+    
+    # only for the 102ch flare fit bc the polynomial is slightly off there if we don't split the lc in two
+    if (pi == "ch") & (file==102):
+        if add == 1:
+            init_mask = init_mask & (t > 2460413.25)
+        elif add == 2:
+            init_mask = init_mask & (t < 2460413.25)
+
+
     print(f"Initial mask: {np.where(~init_mask)[0].shape[0]} data points")
 
 
-    # GET THE KNOWN FLARES --------------------------------------------------------
+    # GET THE MANUALLY SEEN FLARES AND THEIR LOCATIONS -------------------------
 
-    flares = pd.read_csv(f"../results/cheops_flares.csv")
+    flares = pd.read_csv(f"data/cheops_flares_input.csv")
 
-    # convert flares["date"] to string
-    # flares["date"] = flares["date"].astype(str)
+    # convert flares["newpipe"] to string
     flares["newpipe"] = flares["newpipe"].astype(str)
 
     name = f"{file}{pi}"
@@ -142,7 +160,7 @@ if __name__ == '__main__':
     plt.xlabel(time_label)
     plt.ylabel(flux_label)
     plt.title("Initial light curve, masking outliers")
-    plt.savefig(f"../plots/{file}{pi}/flares/hip67522_initial_lc.png")
+    plt.savefig(f"plots/diagnostic/{file}{pi}/hip67522_initial_lc.png")
 
     # -----------------------------------------------------------------------------
 
@@ -206,7 +224,7 @@ if __name__ == '__main__':
     plt.xlabel(time_label)
     plt.ylabel(flux_label)
     plt.title("First polynomial fit to the light curve w/o flare")
-    plt.savefig(f"../plots/{file}{pi}/flares/hip67522_polyfit_init.png")
+    plt.savefig(f"plots/diagnostic/{file}{pi}/hip67522_polyfit_init.png")
 
     # -----------------------------------------------------------------------------
 
@@ -238,7 +256,7 @@ if __name__ == '__main__':
     plt.xlabel(time_label)
     plt.ylabel(flux_label)
     plt.title("Subtracting the polynomial fit and masking outliers")
-    plt.savefig(f"../plots/{file}{pi}/flares/hip67522_subtract_polyfit_init.png")
+    plt.savefig(f"plots/diagnostic/{file}{pi}/hip67522_subtract_polyfit_init.png")
 
     # -----------------------------------------------------------------------------
 
@@ -278,7 +296,7 @@ if __name__ == '__main__':
     plt.xlabel(time_label)
     plt.ylabel(flux_label)
     plt.title("Difference between first and second polynomial fit")
-    plt.savefig(f"../plots/{file}{pi}/flares/hip67522_polyfit_diff.png")
+    plt.savefig(f"plots/diagnostic/{file}{pi}/hip67522_polyfit_diff.png")
 
     # --------------------------------------------------------------------------------
 
@@ -291,7 +309,7 @@ if __name__ == '__main__':
     plt.xlabel(time_label)
     plt.ylabel(flux_label)
     plt.title("Second polynomial fit to the light curve w/o flare")
-    plt.savefig(f"../plots/{file}{pi}/flares/hip67522_polyfit_final.png")
+    plt.savefig(f"plots/diagnostic/{file}{pi}/hip67522_polyfit_final.png")
 
     # --------------------------------------------------------------------------------
 
@@ -300,7 +318,7 @@ if __name__ == '__main__':
     plt.plot(roll, newf_sub, ".", markersize=1)
     plt.xlabel("Roll")
     plt.ylabel(flux_label)
-    plt.savefig(f"../plots/{file}{pi}/flares/hip67522_roll_flux.png")
+    plt.savefig(f"plots/diagnostic/{file}{pi}/hip67522_roll_flux.png")
 
     # --------------------------------------------------------------------------------
 
@@ -319,7 +337,7 @@ if __name__ == '__main__':
     plt.ylabel(flux_label)
 
     plt.title("Savitzky-Golay smoothed light curve")
-    plt.savefig(f"../plots/{file}{pi}/flares/hip67522_savgol_model.png")
+    plt.savefig(f"plots/diagnostic/{file}{pi}/hip67522_savgol_model.png")
 
     # --------------------------------------------------------------------------------
 
@@ -332,7 +350,7 @@ if __name__ == '__main__':
     plt.xlabel(time_label)
     plt.ylabel(flux_label)
     plt.title("Savitzky-Golay de-trended light curve")
-    plt.savefig(f"../plots/{file}{pi}/flares/hip67522_savgol_detrended_lc.png")
+    plt.savefig(f"plots/diagnostic/{file}{pi}/hip67522_savgol_detrended_lc.png")
 
     # --------------------------------------------------------------------------------
 
@@ -437,7 +455,7 @@ if __name__ == '__main__':
     plt.xlabel(time_label)
     plt.ylabel(flux_label)
     plt.title("Final de-trendend light curve")
-    plt.savefig(f"../plots/{file}{pi}/flares/hip67522_final_detrended_light_curve.png")
+    plt.savefig(f"plots/diagnostic/{file}{pi}/hip67522_final_detrended_light_curve.png")
 
     # --------------------------------------------------------------------------------
 
@@ -450,8 +468,8 @@ if __name__ == '__main__':
                        "xc": xc, "yc": yc, "transit_mask": transit_mask})
 
     # new PIPE
-    df.to_csv(f"../data/hip67522/pipe_HIP67522/HIP67522_{file}{pi}_detrended_lc.csv", index=False)
+    df.to_csv(f"results/cheops/HIP67522_{file}{pi}_detrended_lc{add}.csv", index=False)
 
     # WRITE THE INITAL MASK TO A txt FILE ------------------------------------------
 
-    np.savetxt(f"../data/hip67522/pipe_HIP67522/HIP67522_{file}{pi}_mask.txt", fullinit_mask, fmt="%d")
+    np.savetxt(f"results/cheops/HIP67522_{file}{pi}_mask.txt", fullinit_mask, fmt="%d")
