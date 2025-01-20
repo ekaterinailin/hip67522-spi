@@ -95,6 +95,7 @@ if __name__ == '__main__':
         assert np.diff(t[np.isfinite(t)]).min() * 24 * 60 * 60 < 121, "Time series is not 2min cadence"
 
         buffer = 30 / 60 / 24 # 30 minutes
+        total_mask_buffer = 0.2 # d
 
         # define big mask spanning all three flares under indices 2,3,4
         if i == 2:
@@ -124,7 +125,7 @@ if __name__ == '__main__':
         else:
 
             # initial mask
-            total_mask_buffer = 0.35 # d
+
             init_mask = ((flag==0) & 
                         np.isfinite(t) &
                         np.isfinite(f) & 
@@ -402,10 +403,10 @@ if __name__ == '__main__':
 
 
         # WRITE THE FINAL LIGHT CURVE TO A CSV FILE ------------------------------------------
-        
         df = pd.DataFrame({"time": t, "flux": ff, "model" : newfitted, 
                         "flux_err": ferr, "masked_raw_flux": raw_f,
-                        "flag": flag, "transit_mask": transit_mask})
+                        "flag": flag, "transit_mask": transit_mask,
+                        "flare_mask" : flare_mask[init_mask]})
 
         # new PIPE
         df.to_csv(f"../data/tess/HIP67522_detrended_lc_{i}_{sector}.csv", index=False)
