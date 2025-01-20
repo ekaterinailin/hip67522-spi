@@ -65,17 +65,16 @@ def metafunc(offset2, transit):
 if __name__ == '__main__':
 
 
-
-    location = "../data/hip67522_tess_flares.csv"
+    # flares identified in Ilin+2024
+    location = "data/tess_flares_input.csv"
 
     flares = pd.read_csv(location)
 
     for i, row in flares.iterrows():
 
-        # drop these flares because we will treat them together will flare 2 which is close in time
+        # drop these flares because we will treat them together will flare 2 which is close in time to both
         if i == 3 or i == 4:
             continue
-
 
         sector = row.qcs
         tstart, tstop = row.tstart, row.tstop
@@ -84,7 +83,7 @@ if __name__ == '__main__':
         
 
         # get LC data
-        hdu = fits.open(f"../data/tess/tess_hip67522_{sector}.fits")
+        hdu = fits.open(f"data/tess/tess_hip67522_{sector}.fits")
 
         t = hdu[1].data["TIME"]
         f = hdu[1].data["PDCSAP_FLUX"]
@@ -111,16 +110,16 @@ if __name__ == '__main__':
 
             print(f"Big initial mask: {np.where(~big_init_mask)[0].shape[0]} data points")
 
-            big_flare_mask = ((t > flares.tstart[2] - buffer * 1.45) &
+            flare_mask = ((t > flares.tstart[2] - buffer * 1.45) &
                               (t < flares.tstop[4] + buffer * 4) &
                              ~((t>2335.05) & (t<2335.16)))
-            print(f"Big flare mask: {np.where(big_flare_mask)[0].shape[0]} data points")
+            print(f"Big flare mask: {np.where(flare_mask)[0].shape[0]} data points")
 
             # define flare light curve
-            tflare, fflare, ferrflare, flagflare = [arr[big_flare_mask & big_init_mask] for arr in [t, f, ferr, flag]]
+            tflare, fflare, ferrflare, flagflare = [arr[flare_mask & big_init_mask] for arr in [t, f, ferr, flag]]
 
             # apply the mask
-            t, f, ferr, flag = [arr[big_init_mask & ~big_flare_mask] for arr in [t, f, ferr, flag]]
+            t, f, ferr, flag = [arr[big_init_mask & ~flare_mask] for arr in [t, f, ferr, flag]]
 
         else:
 
@@ -168,7 +167,7 @@ if __name__ == '__main__':
         plt.xlabel(time_label)
         plt.ylabel(flux_label)
         plt.title("Initial light curve, masking outliers")
-        plt.savefig(f"../plots/tess/hip67522_flare_{i}_{sector}.png")
+        plt.savefig(f"plots/diagnostic/tess/hip67522_flare_{i}_{sector}.png")
 
         # -----------------------------------------------------------------------------
 
@@ -227,7 +226,7 @@ if __name__ == '__main__':
         plt.xlabel(time_label)
         plt.ylabel(flux_label)
         plt.title("First polynomial fit to the light curve w/o flare")
-        plt.savefig(f"../plots/tess/hip67522_polyfit_init_{i}.png")
+        plt.savefig(f"plots/diagnostic/tess/hip67522_polyfit_init_{i}.png")
 
         # -----------------------------------------------------------------------------
 
@@ -259,7 +258,7 @@ if __name__ == '__main__':
         plt.xlabel(time_label)
         plt.ylabel(flux_label)
         plt.title("Subtracting the polynomial fit and masking outliers")
-        plt.savefig(f"../plots/tess/hip67522_subtract_polyfit_init_{i}_{sector}.png")
+        plt.savefig(f"plots/diagnostic/tess//hip67522_subtract_polyfit_init_{i}_{sector}.png")
 
         # -----------------------------------------------------------------------------
 
@@ -299,7 +298,7 @@ if __name__ == '__main__':
         plt.xlabel(time_label)
         plt.ylabel(flux_label)
         plt.title("Difference between first and second polynomial fit")
-        plt.savefig(f"../plots/tess/hip67522_polyfit_diff_{i}_{sector}.png")
+        plt.savefig(f"plots/diagnostic/tess/hip67522_polyfit_diff_{i}_{sector}.png")
 
         # --------------------------------------------------------------------------------
 
@@ -312,7 +311,7 @@ if __name__ == '__main__':
         plt.xlabel(time_label)
         plt.ylabel(flux_label)
         plt.title("Second polynomial fit to the light curve w/o flare")
-        plt.savefig(f"../plots/tess/hip67522_polyfit_final_{i}_{sector}.png")
+        plt.savefig(f"plots/diagnostic/tess/hip67522_polyfit_final_{i}_{sector}.png")
 
         # --------------------------------------------------------------------------------
 
@@ -332,7 +331,7 @@ if __name__ == '__main__':
         plt.ylabel(flux_label)
 
         plt.title("Savitzky-Golay smoothed light curve")
-        plt.savefig(f"../plots/tess/hip67522_savgol_model_{i}_{sector}.png")
+        plt.savefig(f"plots/diagnostic/tess/hip67522_savgol_model_{i}_{sector}.png")
 
         # --------------------------------------------------------------------------------
 
@@ -345,7 +344,7 @@ if __name__ == '__main__':
         plt.xlabel(time_label)
         plt.ylabel(flux_label)
         plt.title("Savitzky-Golay de-trended light curve")
-        plt.savefig(f"../plots/tess/hip67522_savgol_detrended_lc_{i}_{sector}.png")
+        plt.savefig(f"plots/diagnostic/tess/hip67522_savgol_detrended_lc_{i}_{sector}.png")
 
 
         # REINTRODUCE FLARES TO THE FINAL LIGHT CURVE -----------------------------------------
@@ -359,17 +358,16 @@ if __name__ == '__main__':
         t = np.append(t[outlier_mask], tflare)
 
         ferr = np.append(ferr[outlier_mask], ferrflare)
-        transit_mask = np.append(transit_mask, np.zeros_like(fflare))
+        transit_mask = np.append(transit_mask, np.zeros_like(tflare))
         
 
         print(flag.shape, transit_mask.shape)
         newfitted = np.append(newfitted[outlier_mask], notransitmodelfunc(tflare, *popt))
 
-        # add a mask for the flare region
-        flag = np.append(flag, np.ones_like(fflare))
-
         # make a raw flux with the flare
         raw_f = np.append(f[outlier_mask], fflare)
+
+        flare_mask = np.append(np.zeros_like(f[outlier_mask]), np.ones_like(tflare))
 
        
         #Print all array shapes
@@ -378,12 +376,13 @@ if __name__ == '__main__':
         print("Flux: ", ff.shape)
         print("Model: ", newfitted.shape)
         print("Flux error: ", ferr.shape)
-        print("Flag: ", flag.shape)
         print("Raw flux: ", raw_f.shape)
+        print("Transit mask: ", transit_mask.shape)
+        print("Flare mask: ", flare_mask.shape)
 
 
         # sort all arrays by time
-        t, ff, newfitted, ferr, flag, raw_f = [arr[np.argsort(t)] for arr in [t, ff, newfitted, ferr, flag, raw_f]]
+        t, ff, newfitted, ferr, raw_f = [arr[np.argsort(t)] for arr in [t, ff, newfitted, ferr, raw_f]]
 
 
         # PLOT THE FINAL FLUX  ----------------------------------------------------------
@@ -397,7 +396,7 @@ if __name__ == '__main__':
         plt.xlabel(time_label)
         plt.ylabel(flux_label)
         plt.title("Final de-trendend light curve")
-        plt.savefig(f"../plots/tess/hip67522_final_detrended_light_curve_{i}_{sector}.png")
+        plt.savefig(f"plots/diagnostic/tess/hip67522_final_detrended_light_curve_{i}_{sector}.png")
 
         # --------------------------------------------------------------------------------
 
@@ -405,12 +404,12 @@ if __name__ == '__main__':
         # WRITE THE FINAL LIGHT CURVE TO A CSV FILE ------------------------------------------
         df = pd.DataFrame({"time": t, "flux": ff, "model" : newfitted, 
                         "flux_err": ferr, "masked_raw_flux": raw_f,
-                        "flag": flag, "transit_mask": transit_mask,
-                        "flare_mask" : flare_mask[init_mask]})
+                        "transit_mask": transit_mask,
+                        "flare_mask" : flare_mask})
 
         # new PIPE
-        df.to_csv(f"../data/tess/HIP67522_detrended_lc_{i}_{sector}.csv", index=False)
+        df.to_csv(f"results/tess/HIP67522_detrended_lc_{i}_{sector}.csv", index=False)
 
         # WRITE THE INITAL MASK TO A txt FILE ------------------------------------------
 
-        np.savetxt(f"../data/tess/HIP6752_{i}_{sector}_mask.txt", init_mask, fmt="%d")
+        np.savetxt(f"results/tess/HIP6752_{i}_{sector}_mask.txt", init_mask, fmt="%d")
