@@ -410,6 +410,4 @@ if __name__ == '__main__':
         # new PIPE
         df.to_csv(f"results/tess/HIP67522_detrended_lc_{i}_{sector}.csv", index=False)
 
-        # WRITE THE INITAL MASK TO A txt FILE ------------------------------------------
-
-        np.savetxt(f"results/tess/HIP6752_{i}_{sector}_mask.txt", init_mask, fmt="%d")
+       
