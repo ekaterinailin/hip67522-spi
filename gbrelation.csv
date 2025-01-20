@@ -1,0 +1,7 @@
+id,spt,ra,dec,log10Lx,log10Lr,radio_band_GHz,xray_band_keV,source
+Gl 97,G1V,,,29,13.7,8.5,rosat,gudel1994discovery
+Gl 775,G5V,,,29.4,14.03,8.5,rosat,gudel1994discovery
+HD 129333,dG0e,,,29.9,14.26,8.5,rosat,gudel1994discovery
+HD 225239,G2V,,,29.5,14.26,8.5,rosat,gudel1994discovery
+Sun,G2V,,,27,10.8,8.5,rosat,gudel1994discovery
+
