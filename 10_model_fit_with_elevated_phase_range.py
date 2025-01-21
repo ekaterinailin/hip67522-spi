@@ -5,12 +5,12 @@ UTF-8, Python 3
 HIP 67522
 ------------
 
-Ekaterina Ilin, 2024, MIT License, ilin@astron.nl
+Ekaterina Ilin, 2025, MIT License, ilin@astron.nl
 
 This script defines Poisson models for the flare rate 
 of HIP 67522 and fits them to the observed flare data.
 
-MCMC chains, corner plots, and best fit parameters are plotted.
+MCMC chains, corner plots, and best fit parameters are plotted if diagnostics is set to 1.
 
 We also calculate the Bayesian Information Criterion (BIC),
 the Akaike Information Criterion (AIC), and the chi-squared/dof
@@ -30,6 +30,9 @@ import os
 import matplotlib.pyplot as plt 
 
 if __name__ == "__main__":
+
+    # number of mcmc trials for modulated model
+    ntrials = 30000
 
     # make diagnostic plots?
     diagnostics = bool(int(os.sys.argv[2]))
@@ -178,7 +181,7 @@ if __name__ == "__main__":
     pos = params + 1e-4 * np.random.randn(nwalkers, ndim)
 
     mod_sampler = emcee.EnsembleSampler(nwalkers, ndim, log_probability_mod)
-    mod_sampler.run_mcmc(pos, 100000, progress=True)
+    mod_sampler.run_mcmc(pos, ntrials, progress=True)
 
     # ---------------------------------------------------------------------------
 
@@ -186,7 +189,7 @@ if __name__ == "__main__":
 
     # ----------------------------------------------------------------------------
     # MCMC CHAIN PLOTS -----------------------------------------------------------
-    mod_samples = mod_sampler.get_chain(discard=80000)
+    mod_samples = mod_sampler.get_chain(discard=ntrials//10*8)
 
     if diagnostics:
         fig, axes = plt.subplots(ndim, figsize=(10, 7), sharex=True)
@@ -211,7 +214,7 @@ if __name__ == "__main__":
     # MCMC CORNER PLOT -----------------------------------------------------------
 
     # # plot corner
-    mod_flat_samples = mod_sampler.get_chain(discard=80000, thin=15, flat=True)
+    mod_flat_samples = mod_sampler.get_chain(discard=ntrials//10*8, thin=15, flat=True)
 
 
     if diagnostics:
@@ -229,11 +232,12 @@ if __name__ == "__main__":
     # ----------------------------------------------------------------------------
     # SAVE THE CHAIN -------------------------------------------------------------
 
-    # make the flat samples a pandas dataframe
-    df = pd.DataFrame(mod_flat_samples, columns=["l0", "l1", "phi0", "dphi"])
+    if diagnostics:
+        # make the flat samples a pandas dataframe
+        df = pd.DataFrame(mod_flat_samples, columns=["l0", "l1", "phi0", "dphi"])
 
-    # save to file
-    df.to_csv(f"results/modulated_samples.csv", index=False)
+        # save to file
+        df.to_csv(f"results/modulated_samples_{nbinedges}.csv", index=False)
 
     # ----------------------------------------------------------------------------
 
@@ -326,15 +330,18 @@ if __name__ == "__main__":
     unmod_flat_samples = unmod_sampler.get_chain(discard=5000, thin=15, flat=True)
 
     # calculate the 16th, 50th and 84th percentiles for all parameters
-    lambda0_mcmc = np.percentile(unmod_flat_samples[:, 0], [16, 50, 84])
+    lambda0_mcmc_unmod = np.percentile(unmod_flat_samples[:, 0], [16, 50, 84])
 
-    unmod_best_median = [lambda0_mcmc[1]]
+    unmod_best_median = [lambda0_mcmc_unmod[1]]
 
-    print(f"lambda0 {lambda0_mcmc[1]:.2f} + {lambda0_mcmc[2] - lambda0_mcmc[1]:.2f} - {lambda0_mcmc[1] - lambda0_mcmc[0]:.2f}")
+    print(f"lambda0 {lambda0_mcmc_unmod[1]:.2f} + "
+          f"{lambda0_mcmc_unmod[2] - lambda0_mcmc_unmod[1]:.2f} - "
+          f"{lambda0_mcmc_unmod[1] - lambda0_mcmc_unmod[0]:.2f}")
 
     # save to file
-    df["lambda0_unmod"] = lambda0_mcmc
-    df.to_csv(f"results/bestfit_parameters.csv")
+    df["lambda0_unmod"] = lambda0_mcmc_unmod
+    if diagnostics:
+        df.to_csv(f"results/bestfit_parameters_{nbinedges}.csv")
 
     # ----------------------------------------------------------------------------
     
@@ -357,7 +364,7 @@ if __name__ == "__main__":
         df = pd.DataFrame(unmod_flat_samples, columns=["l0"])
 
         # save to file
-        df.to_csv(f"results/unmodulated_samples.csv", index=False)
+        df.to_csv(f"results/unmodulated_samples_{nbinedges}.csv", index=False)
 
     # ----------------------------------------------------------------------------
     # PLOT BOTH MODELS -----------------------------------------------------------
@@ -440,15 +447,10 @@ if __name__ == "__main__":
 
     # -----------------------------------------------------------------------------------
 
-    # save nbins,AICmod,AICunmod,BICmod,BICunmod,exp((AICmod - AICunmod) / 2),logmod,logunmod,
-    # lambda0_mcmc[1],lambda1_mcmc[1],phi0_mcmc[1],dphi_mcmc[1],lambda0_mcmc[1],unmod_best_median[0]
-
-    # save to file if needed
-
-    # with open("../results/bestfit_parameters.txt", "a") as f:
-    #     # f.write("nbins,AICmod,AICunmod,deltaAIC,BICmod,BICunmod,exp((AICmod - AICunmod) / 2),logmod,logunmod," +
-    #     #         "lambda0,lambda1,phi0,dphi,lambda0_unmod\n")
-    #     f.write(f"{nbinedges},{AICmod},{AICunmod},{AICmod-AICunmod},{BICmod},{BICunmod},{np.exp((AICmod - AICunmod) / 2)},{logmod},{logunmod},")
-    #     f.write(f"{lambda0_mcmc[1]},{lambda1_mcmc[1]},{phi0_mcmc[1]},{dphi_mcmc[1]},{lambda0_mcmc[1]},{unmod_best_median[0]}\n")
+    with open("results/bestfit_parameters_aic.txt", "a") as f:
+        # f.write("nbins,AICmod,AICunmod,deltaAIC,BICmod,BICunmod,exp((AICmod - AICunmod) / 2),logmod,logunmod," +
+        #         "lambda0,lambda1,phi0,dphi,lambda0_unmod\n")
+        f.write(f"{nbinedges},{AICmod},{AICunmod},{AICmod-AICunmod},{logmod},{logunmod},")
+        f.write(f"{lambda0_mcmc[1]},{lambda1_mcmc[1]},{phi0_mcmc[1]},{dphi_mcmc[1]},{unmod_best_median[0]}\n")
 
 
