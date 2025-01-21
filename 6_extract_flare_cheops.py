@@ -52,8 +52,6 @@ if __name__ == "__main__":
     # read the light curve
     lc = pd.read_csv(f"{folder}/HIP67522_{file}{pi}_detrended_lc.csv")
 
-    print(lc.head())
-
     # READ THE MODEL PARAMETERS --------------------------------------------------------------
     # read input from cheops_flares_input.csv
     input_file = "data/cheops_flares_input.csv"
@@ -133,7 +131,7 @@ if __name__ == "__main__":
 
     def log_prior(theta):
         t_peak, dur, ampl = theta
-        if (t_flare[0] < t_peak < t_flare[-1]) and (0.0 < dur < 0.1) and (0.001 < ampl < newmed):
+        if (t_flare[0] < t_peak < t_flare[-1]) and (0.0 < dur < 0.2) and (0.001 < ampl < newmed):
             return 0.0
         return -np.inf
 
@@ -249,160 +247,7 @@ if __name__ == "__main__":
     plt.savefig(f"plots/diagnostic/{file}{pi}/hip67522_oneflare_model_residuals.png")
     # ---------------------------------------------------------------------------------
 
-    # DO THE SAME FOR A TWO-FLARE MODEL -------------------------------------------------
-    if two_flare:
-
-        # now fit a two component model to the flare light curve
-        def flare_fit_model(t, t_peak, dur, ampl, t_peak2, dur2, ampl2):
-            return (flare_model(parametrization, t, t_peak, dur, ampl) + 
-                    flare_model(parametrization, t, t_peak2, dur2, ampl2))
-
-        # get the initial guess
-        tpeak2 = t_peak + 0.01
-        dur2 = 0.02
-        ampl2 = 0.02*newmed
-
-        # fit the two-flare model
-        popt, pcov = curve_fit(flare_fit_model, t_flare, f_flare, p0=[t_peak, dur, ampl, tpeak2, dur2, ampl2])
-
-        print("Fitted two-flare parameters:")
-        print(popt)
-
-        # define the log likelihood, prior, and probability
-        def log_likelihood(theta, t, f, ferrstd):
-            t_peak, dur, ampl, t_peak2, dur2, ampl2 = theta
-            model = flare_fit_model(t, t_peak, dur, ampl, t_peak2, dur2, ampl2)
-            return -0.5 * np.sum((f - model)**2 / ferrstd**2)
-
-        def log_prior(theta):
-            t_peak, dur, ampl, t_peak2, dur2, ampl2 = theta
-            if  ((t_flare[0] < t_peak < t_flare[-1]) and 
-                (0.0 < dur < 0.1) and 
-                (0.01 < ampl < 1e7) and 
-                (t_flare[0] < t_peak2 < t_flare[-1]) and 
-                (0.0 < dur2 < 0.1) and 
-                (0.01 < ampl2 < 1e7)):
-                return 0.0
-            return -np.inf
-
-        def log_probability(theta, t, f, ferrstd):
-            lp = log_prior(theta)
-            logl = log_likelihood(theta, t, f, ferrstd)
-            if (not np.isfinite(lp)) or (not np.isfinite(logl)):
-                return -np.inf
-            return lp + logl
-
-        # define the number of dimensions, walkers, and steps
-        ndim = 6
-        nwalkers = 32
-        nsteps = 80000
-
-        # get std of the flux outside the flare region
-        ferrstd = np.std(lc.flux[lc.flag==0].values)
-
-        # define the initial position of the walkers
-        pos = popt + 1e-4 * np.random.randn(nwalkers, ndim)
-
-        # init the sampler
-        sampler = emcee.EnsembleSampler(nwalkers, ndim, log_probability, 
-                                        args=(t_flare, f_flare, ferrstd))
-
-        # run the sampler
-        sampler.run_mcmc(pos, nsteps, progress=True)
-
-        # PLOT THE CHAINS ----------------------------------------------------------------
-
-        fig, axes = plt.subplots(6, figsize=(10, 7), sharex=True)
-        samples = sampler.get_chain()
-        labels = ["t_peak", "dur", "ampl", "t_peak2", "dur2", "ampl2"]
-        for i in range(ndim):
-            ax = axes[i]
-            ax.plot(samples[:, :, i], "k", alpha=0.3)
-            ax.set_ylabel(labels[i])
-            ax.yaxis.set_label_coords(-0.1, 0.5)
-
-        axes[-1].set_xlabel("step number")
-        plt.savefig(f"plots/diagnostic/{file}{pi}/hip67522_twoflare_model_mcmc_chains.png")
-        # ---------------------------------------------------------------------------------
-
-        # PLOT THE CORNER PLOT -----------------------------------------------------------
-
-        flat_samples = sampler.get_chain(discard=60000, thin=10, flat=True)
-
-        fig = corner.corner(flat_samples, labels=labels, truths=popt)
-
-        plt.savefig(f"plots/diagnostic/{file}{pi}/hip67522_twoflare_model_mcmc_corner.png")
-
-        # SAMPLE SOLUTIONS FROM THE CHAIN AND PLOT THEM -----------------------------------
-
-        # median
-        t_peak, dur, ampl, t_peak2, dur2, ampl2 = np.median(flat_samples, axis=0)
-
-        # init light curve for interpolation
-        # make linspace such that each data point is 10s
-
-        ndat = int((t_flare.max() - t_flare.min() ) * 24 * 60 * 6)
-        t_interpolate = np.linspace(t_flare.min(), t_flare.max(), ndat)
-
-        f_interpolate = flare_fit_model(t_interpolate, t_peak, dur, ampl, t_peak2, dur2, ampl2) + newmed
-
-        # get the equivalent durations, too
-        eds = []
-
-        # init figure
-        plt.figure(figsize=(10, 5))
-
-        # iterate over a 500 random samples from the chain
-        for i in np.random.randint(len(flat_samples), size=600):
-
-            # get sample
-            sample = flat_samples[i]
-
-            # get the interpolated flux model
-            f_interpolate = flare_fit_model(t_interpolate, *sample) + newmed
-
-            # plot the interpolated flux model
-            plt.plot(t_interpolate, f_interpolate, color="black", alpha=0.01, lw=1)
-
-            # get the equivalent duration
-            flc = FlareLightCurve(time=t_interpolate, flux=f_interpolate, flux_err=ferrstd)
-            flc.detrended_flux = f_interpolate
-            flc.detrended_flux_err = ferrstd
-            flc.it_med = newmed
-            ed = equivalent_duration(flc, 0, len(f_interpolate)-1)  
-            eds.append(ed)
-
-
-        plt.plot(t_interpolate, f_interpolate, color="black", alpha=0.01, lw=1, label="samples from posterior distribution")
-
-        plt.plot(t_interpolate, f_interpolate, color="red", lw=1, label="best-fit model")
-
-        plt.plot(t_flare, f_flare+newmed, ".", markersize=1, color="black", label="de-trended flare light curve")
-        plt.xlim(t_flare.min(), t_flare.max())
-        plt.axhline(newmed, color="black", lw=1)
-        plt.xlabel("Time [BJD]")
-        plt.ylabel("Flare flux [e-/s]")
-
-        plt.legend(loc=0, frameon=False)
-        plt.title("Two-flare model")
-        plt.savefig(f"plots/diagnostic/{file}{pi}/hip67522_twoflare_model_posterior.png")
-        # ---------------------------------------------------------------------------------
-
-        # PLOT THE RESIDUALS ---------------------------------------------------------------
-
-        # get the residuals
-        residuals = f_flare - flare_fit_model(t_flare, t_peak, dur, ampl, t_peak2, dur2, ampl2)
-
-        plt.figure(figsize=(10, 5))
-        plt.plot(t_flare, residuals, ".", markersize=3)
-
-        plt.axhline(0, color="red", lw=1)
-        plt.xlabel("Time [BJD]")
-        plt.ylabel(r"Flux [e$^{-}$/s]")
-        plt.title("Residuals of the two-flare model")
-        plt.savefig(f"plots/diagnostic/{file}{pi}/hip67522_twoflare_model_residuals.png")
-        # ---------------------------------------------------------------------------------
-
+   
 
     # GET AND PLOT EQUIVALENT DURATIONS ------------------------------------------------
     plt.figure(figsize=(6, 5))
