@@ -5,7 +5,7 @@ UTF-8, Python 3.11.7
 HIP 67522
 ------------
 
-Ekaterina Ilin, 2024, MIT License, ilin@astron.nl
+Ekaterina Ilin, 2025, MIT License, ilin@astron.nl
 
 
 Extracts the flare light curve from a CHEOPS imagette light curve.
@@ -34,6 +34,12 @@ from funcs.flares import flare_factor
 
 if __name__ == "__main__":
 
+    # if there is no results/cheops_flares.csv file, create it and write the header
+    if not os.path.exists("results/cheops_flares.csv"):
+        with open("results/cheops_flares.csv", "w") as f:
+            f.write("date,med_flux,amplitude,t_peak_BJD,dur_d,amplitude2,t_peak_BJD2,dur_d2,ED,"
+                    "EDerr,mean_bol_energy,std_bol_energy,ingress,egress,tmin,tmax,parametrization,tot_obs_time_d\n")
+
     # GET THE IMAGETTE LC -----------------------------------------------------------
     
     # read file string from command line
@@ -41,16 +47,16 @@ if __name__ == "__main__":
     pi = os.sys.argv[2]
 
     # read the light curve from file
-    folder = "../data/hip67522/pipe_HIP67522"
+    folder = "results/cheops"
 
     # read the light curve
     lc = pd.read_csv(f"{folder}/HIP67522_{file}{pi}_detrended_lc.csv")
 
     print(lc.head())
 
-        # READ THE MODEL PARAMETERS --------------------------------------------------------------
+    # READ THE MODEL PARAMETERS --------------------------------------------------------------
     # read input from cheops_flares_input.csv
-    input_file = "../data/cheops_flares_input.csv"
+    input_file = "data/cheops_flares_input.csv"
     df = pd.read_csv(input_file)
 
     # get the row for the file
@@ -67,29 +73,21 @@ if __name__ == "__main__":
 
     # extend the flare region using tmin and tmax
     extra_flag = (lc.time > tmin) & (lc.time < tmax)
-    lc.flag[extra_flag] = 1
+    flag = np.zeros(len(lc))
+    flag[extra_flag] = 1
 
     # -----------------------------------------------------------------------------------------
 
     newmed = lc.flux[lc.flag==0].median()
-
     f_flare = lc.flux[lc.flag==1].values - newmed
     t_flare = lc.time[lc.flag==1].values
     ferr_flare = lc.flux_err[lc.flag==1].values
 
 
-
-
-    # GET THE FLARE LIGHT CURVE --------------------------------------------------------------
-
-    # subtract the quiescent model from the flare region and add the median
-    # f_flare = 
-
-
     # WRITE THE FLARE LIGHT CURVE TO A CSV FILE ------------------------------------------------
 
-    flarelc = pd.DataFrame({"t": t_flare, "f": f_flare, "ferr": ferr_flare})
-    flarelc.to_csv(f"../plots/flare_lightcurves/hip67522_flare_lc_{file}{pi}.csv", index=False)
+    # flarelc = pd.DataFrame({"t": t_flare, "f": f_flare, "ferr": ferr_flare})
+    # flarelc.to_csv(f"results/cheops/{}{}/hip67522_flare_lc_{file}{pi}.csv", index=False)
 
     # PLOT THE FLARE LIGHT CURVE --------------------------------------------------------------
 
@@ -102,7 +100,7 @@ if __name__ == "__main__":
     plt.ylabel(r"Flux [e$^{-}$/s]")
     plt.title("Flare region flux after subtraction of quiescent model")
     
-    plt.savefig(f"../plots/flare_lightcurves/hip67522_flare_lc_{file}{pi}.png", dpi=300)
+    plt.savefig(f"plots/diagnostic/{file}{pi}/hip67522_flare_lc_{file}{pi}.png", dpi=300)
     # -----------------------------------------------------------------------------------------
 
     # GET A FIRST GUESS OF THE FLARE PARAMETERS ------------------------------------------------
@@ -149,7 +147,7 @@ if __name__ == "__main__":
     # define the number of dimensions, walkers, and steps
     ndim = 3
     nwalkers = 32
-    nsteps = 100000
+    nsteps = 30000
 
     # define the initial position of the walkers
     pos = popt + 1e-4 * np.random.randn(nwalkers, ndim)
@@ -176,17 +174,17 @@ if __name__ == "__main__":
         ax.yaxis.set_label_coords(-0.1, 0.5)
 
     axes[-1].set_xlabel("step number")
-    plt.savefig(f"../plots/{file}{pi}/flares/hip67522_oneflare_model_mcmc_chains.png")
+    plt.savefig(f"plots/diagnostic/{file}{pi}/hip67522_oneflare_model_mcmc_chains.png")
     # ---------------------------------------------------------------------------------
 
     # SHOW THE CORNER PLOT -----------------------------------------------------------
 
     # get the flat samples
-    flat_samples = sampler.get_chain(discard=90000, thin=15, flat=True)
+    flat_samples = sampler.get_chain(discard=nsteps//10*9, thin=15, flat=True)
 
     # plot the corner plot
     fig = corner.corner(flat_samples, labels=labels)
-    plt.savefig(f"../plots/{file}{pi}/flares/hip67522_oneflare_model_mcmc_corner.png")
+    plt.savefig(f"plots/diagnostic/{file}{pi}/hip67522_oneflare_model_mcmc_corner.png")
 
     # ---------------------------------------------------------------------------------
 
@@ -196,8 +194,8 @@ if __name__ == "__main__":
     t_peak, dur, ampl = np.median(flat_samples, axis=0)
 
     # init a light curve for interpolation
-    ndat = int((t_flare.max() - t_flare.min()) * 24 * 60 * 6)
-    t_interpolate = np.linspace(t_flare.min(), t_flare.max(), ndat)
+    ndat = int((t_flare.max() - t_flare.min() ) * 24 * 60 * 6)
+    t_interpolate = np.linspace(t_flare.min(), t_flare.max() , ndat)
 
     # initif figure
     plt.figure(figsize=(10, 5))
@@ -222,9 +220,8 @@ if __name__ == "__main__":
         flc.it_med = newmed
         flc.detrended_flux = f_interpolate
         ed = equivalent_duration(flc, 0, len(t_interpolate)-1)  
-
-        if ed < 0.2:
-            eds.append(ed)
+        
+        eds.append(ed)
 
     # plot the flare region on top
     plt.plot(t_flare, f_flare+newmed, ".", markersize=1, color="black")
@@ -234,7 +231,7 @@ if __name__ == "__main__":
     plt.title("Best fit one-flare model")
     plt.xlim(t_flare.min(), t_flare.max())
 
-    plt.savefig(f"../plots/{file}{pi}/flares/hip67522_oneflare_model_bestfit.png")
+    plt.savefig(f"plots/diagnostic/{file}{pi}/hip67522_oneflare_model_bestfit.png")
     # ---------------------------------------------------------------------------------
 
     # PLOT THE RESIDUALS ---------------------------------------------------------------
@@ -249,7 +246,7 @@ if __name__ == "__main__":
     plt.xlabel("Time [BJD]")
     plt.ylabel(r"Flux [e$^{-}$/s]")
     plt.title("Residuals of the one-flare model")
-    plt.savefig(f"../plots/{file}{pi}/flares/hip67522_oneflare_model_residuals.png")
+    plt.savefig(f"plots/diagnostic/{file}{pi}/hip67522_oneflare_model_residuals.png")
     # ---------------------------------------------------------------------------------
 
     # DO THE SAME FOR A TWO-FLARE MODEL -------------------------------------------------
@@ -298,7 +295,7 @@ if __name__ == "__main__":
         # define the number of dimensions, walkers, and steps
         ndim = 6
         nwalkers = 32
-        nsteps = 20000
+        nsteps = 80000
 
         # get std of the flux outside the flare region
         ferrstd = np.std(lc.flux[lc.flag==0].values)
@@ -325,16 +322,16 @@ if __name__ == "__main__":
             ax.yaxis.set_label_coords(-0.1, 0.5)
 
         axes[-1].set_xlabel("step number")
-        plt.savefig(f"../plots/{file}{pi}/flares/hip67522_twoflare_model_mcmc_chains.png")
+        plt.savefig(f"plots/diagnostic/{file}{pi}/hip67522_twoflare_model_mcmc_chains.png")
         # ---------------------------------------------------------------------------------
 
         # PLOT THE CORNER PLOT -----------------------------------------------------------
 
-        flat_samples = sampler.get_chain(discard=15000, thin=10, flat=True)
+        flat_samples = sampler.get_chain(discard=60000, thin=10, flat=True)
 
         fig = corner.corner(flat_samples, labels=labels, truths=popt)
 
-        plt.savefig(f"../plots/{file}{pi}/flares/hip67522_twoflare_model_mcmc_corner.png")
+        plt.savefig(f"plots/diagnostic/{file}{pi}/hip67522_twoflare_model_mcmc_corner.png")
 
         # SAMPLE SOLUTIONS FROM THE CHAIN AND PLOT THEM -----------------------------------
 
@@ -344,7 +341,7 @@ if __name__ == "__main__":
         # init light curve for interpolation
         # make linspace such that each data point is 10s
 
-        ndat = int((t_flare.max() - t_flare.min()) * 24 * 60 * 6)
+        ndat = int((t_flare.max() - t_flare.min() ) * 24 * 60 * 6)
         t_interpolate = np.linspace(t_flare.min(), t_flare.max(), ndat)
 
         f_interpolate = flare_fit_model(t_interpolate, t_peak, dur, ampl, t_peak2, dur2, ampl2) + newmed
@@ -356,7 +353,7 @@ if __name__ == "__main__":
         plt.figure(figsize=(10, 5))
 
         # iterate over a 500 random samples from the chain
-        for i in np.random.randint(len(flat_samples), size=500):
+        for i in np.random.randint(len(flat_samples), size=600):
 
             # get sample
             sample = flat_samples[i]
@@ -388,7 +385,7 @@ if __name__ == "__main__":
 
         plt.legend(loc=0, frameon=False)
         plt.title("Two-flare model")
-        plt.savefig(f"../plots/{file}{pi}/flares/hip67522_twoflare_model_posterior.png")
+        plt.savefig(f"plots/diagnostic/{file}{pi}/hip67522_twoflare_model_posterior.png")
         # ---------------------------------------------------------------------------------
 
         # PLOT THE RESIDUALS ---------------------------------------------------------------
@@ -403,7 +400,7 @@ if __name__ == "__main__":
         plt.xlabel("Time [BJD]")
         plt.ylabel(r"Flux [e$^{-}$/s]")
         plt.title("Residuals of the two-flare model")
-        plt.savefig(f"../plots/{file}{pi}/flares/hip67522_twoflare_model_residuals.png")
+        plt.savefig(f"plots/diagnostic/{file}{pi}/hip67522_twoflare_model_residuals.png")
         # ---------------------------------------------------------------------------------
 
 
@@ -411,7 +408,7 @@ if __name__ == "__main__":
     plt.figure(figsize=(6, 5))
     plt.hist(eds, histtype="step", bins=50, color="black")
     plt.xlabel("Equivalent Duration [s]")
-    plt.savefig(f"../plots/{file}{pi}/flares/hip67522_model_posterior_ED.png")
+    plt.savefig(f"plots/diagnostic/{file}{pi}/hip67522_model_posterior_ED.png")
 
     ED = np.median(eds)
     EDerr = np.std(eds)
@@ -424,7 +421,7 @@ if __name__ == "__main__":
     # GET BOLOMETRIC FLARE ENERGY ------------------------------------------------------
     
     # read CHEOPS response function
-    cheops_resp = pd.read_csv("../data/CHEOPS_bandpass.csv")
+    cheops_resp = pd.read_csv("data/CHEOPS_bandpass.csv")
     wav, resp = cheops_resp.WAVELENGTH.values, cheops_resp.THROUGHPUT.values
 
     # effective temperature of HIP 67522 from Rizzuto et al. 2020
@@ -439,7 +436,7 @@ if __name__ == "__main__":
     tflare = 10000.  # K
 
     # calculate bolometric flare energy
-    print("\n We use an 10000K flare temperature.")
+    print("\nWe use an 10000K flare temperature.")
     bol_energy = flare_factor(teff, radius, wav, resp,  tflare=tflare) * ED * u.s
 
 
@@ -459,22 +456,20 @@ if __name__ == "__main__":
     bol_energies = ffactor * np.random.choice(eds, 500) * u.s
 
     # calculate the mean and standard deviation of the bolometric flare energy
-    mean_bol_energy = np.mean(bol_energies)
-    std_bol_energy = np.std(bol_energies)
-    mean_ffactor = np.mean(ffactor)
+    mean_bol_energy = np.mean(bol_energies).value
+    std_bol_energy = np.std(bol_energies).value
+    mean_ffactor = np.mean(ffactor).value
 
     # plot the distribution of the bolometric flare energy
     plt.figure(figsize=(6, 5))
     plt.hist(bol_energies.value.flatten(), histtype="step", bins=50, color="black")
     plt.xlabel("Bolometric Flare Energy [ergs]")
-    plt.savefig(f"../plots/{file}{pi}/flares/hip6752_model_posterior_bolometric_energy.png")
+    plt.savefig(f"plots/diagnostic/{file}{pi}/hip6752_model_posterior_bolometric_energy.png")
 
 
 
     # WRITE THE RESULTS TO A CSV FILE ---------------------------------------------------
-    with open(f"../results/cheops_flares.csv", "a") as f:
-        # f.write("date,med_flux,amplitude,t_peak_BJD,dur_d,amplitude2,t_peak_BJD2,dur_d2,ED,"
-        #         "EDerr,mean_bol_energy,std_bol_energy,ingress,egress,tmin,tmax,parametrization,tot_obs_time_d\n")
+    with open(f"results/cheops_flares.csv", "a") as f:
         if two_flare:
             f.write(f"{file}{pi},{newmed},{ampl},{t_peak},{dur},{ampl2},{t_peak2},{dur2},{ED:.2e}," +
                     f"{EDerr:.2e},{mean_bol_energy},{std_bol_energy},{ingress},{egress}," + 
