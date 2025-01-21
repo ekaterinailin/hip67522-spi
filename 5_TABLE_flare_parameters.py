@@ -18,16 +18,13 @@ if __name__ == "__main__":
 
 
     # CHEOPS data ---------------------
-    cheops = pd.read_csv('../results/cheops_flares.csv')
-    cheops["rel_amp"] = cheops['amplitude'] / cheops['newmed']
+    cheops = pd.read_csv('results/cheops_flares.csv')
+    cheops["rel_amp"] = cheops['amplitude'] / cheops['med_flux']
     cheops["mission"] = "CHEOPS"
-
-    # use the new model for the flare parametrization
-    cheops = cheops[cheops["parametrization"] == "mendoza2022"]
 
 
     # TESS data -----------------------
-    tess = pd.read_csv('../results/tess_flares.csv')
+    tess = pd.read_csv('results/tess_flares.csv')
 
     tess["rel_amp"] = tess['amplitude'] / tess['med_flux']
     tess["mission"] = "TESS"
@@ -42,14 +39,14 @@ if __name__ == "__main__":
 
 
     # ORBITAL PHASE --------------------
-    hip67522params = pd.read_csv("../data/hip67522_params.csv")
+    hip67522params = pd.read_csv("data/hip67522_params.csv")
     period = hip67522params[hip67522params.param=="orbper_d"].val.values[0]
     midpoint = hip67522params[hip67522params.param=="midpoint_BJD"].val.values[0]
     df['orb_phase'] = (df['t_peak_BJD'] - midpoint) / period % 1
 
 
     # SAVE TO FILE ---------------------
-    df.to_csv('../results/hip67522_flares.csv', index=False)
+    df.to_csv('results/hip67522_flares.csv', index=False)
 
     # LOG10 the flare energy -----------
     df['log10_mean_bol_energy'] = np.log10(df['mean_bol_energy'])
@@ -58,7 +55,7 @@ if __name__ == "__main__":
 
     # EXCLUDED FLARES -------------------
     df["~"] = " "
-    df.loc[df['log10_mean_bol_energy'] < 33, '~'] = r"excluded$^1$"
+    df.loc[df['log10_mean_bol_energy'] < 34, '~'] = r"excluded$^1$"
 
     # FORMAT STRINGS --------------------
     energy = df['log10_mean_bol_energy'].apply(lambda x: f"{x:.1f}")
