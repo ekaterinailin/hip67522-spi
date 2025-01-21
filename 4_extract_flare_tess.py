@@ -35,13 +35,13 @@ from funcs.flares import flare_factor
 if __name__ == "__main__":
 
     # init the results table
-    with open(f"../results/tess_flares.csv", "a") as f:
+    with open(f"results/tess_flares.csv", "w") as f:
         f.write("sector,flare,med_flux,amplitude,t_peak_BJD,dur_d,ED,"
                 "EDerr,mean_bol_energy,std_bol_energy,parametrization\n")
 
-    parametrization = "mendoza2022"#"davenport2014"
+    parametrization = "mendoza2022"
 
-    location = "../data/hip67522_tess_flares.csv"
+    location = "data/tess_flares_input.csv"
 
     flares = pd.read_csv(location)
 
@@ -56,7 +56,7 @@ if __name__ == "__main__":
         print(f"Processing sector {sector} from {tstart} to {tstop}")
 
 
-        lc = pd.read_csv(f"../data/tess/HIP67522_detrended_lc_{i}_{sector}.csv")
+        lc = pd.read_csv(f"results/tess/HIP67522_detrended_lc_{i}_{sector}.csv")
 
 
         newmed = lc.flux[(lc.time.values < tstart)].median()
@@ -75,7 +75,7 @@ if __name__ == "__main__":
         plt.ylabel(r"Flux [e$^{-}$/s]")
         plt.title("Flare region flux after subtraction of quiescent model")
 
-        plt.savefig(f"../plots/tess/hip67522_flare_detrended_{i}_{sector}.png", dpi=300)
+        plt.savefig(f"plots/diagnostic/tess/hip67522_flare_detrended_{i}_{sector}.png", dpi=300)
         # -----------------------------------------------------------------------------------------
 
         # GET A FIRST GUESS OF THE FLARE PARAMETERS ------------------------------------------------
@@ -176,7 +176,9 @@ if __name__ == "__main__":
         pos = popt + 1e-4 * np.random.randn(nwalkers, ndim)
 
         # define the standard deviation of the flux in the flare region using the non-flare region
-        ferrstd = np.std(lc.flux[lc.flag==0].values)
+        mask = (t_flare > tstart) & (t_flare < tstop)
+        ferrstd = np.std(lc.flux.values[~mask])
+        print(f"Standard deviation of the flux in the flare region: {ferrstd:.2e}")
 
         # init the sampler
         sampler = emcee.EnsembleSampler(nwalkers, ndim, log_probability, 
@@ -199,7 +201,7 @@ if __name__ == "__main__":
             ax.yaxis.set_label_coords(-0.1, 0.5)
 
         axes[-1].set_xlabel("step number")
-        plt.savefig(f"../plots/tess/hip67522_oneflare_model_mcmc_chains_{i}_{sector}.png")
+        plt.savefig(f"plots/diagnostic/tess/hip67522_oneflare_model_mcmc_chains_{i}_{sector}.png")
         # ---------------------------------------------------------------------------------
 
         # SHOW THE CORNER PLOT -----------------------------------------------------------
@@ -209,7 +211,7 @@ if __name__ == "__main__":
 
         # plot the corner plot
         fig = corner.corner(flat_samples, labels=labels)
-        plt.savefig(f"../plots/tess/hip67522_oneflare_model_mcmc_corner_{i}_{sector}.png")
+        plt.savefig(f"plots/diagnostic/tess/hip67522_oneflare_model_mcmc_corner_{i}_{sector}.png")
 
         # ---------------------------------------------------------------------------------
 
@@ -295,7 +297,7 @@ if __name__ == "__main__":
         plt.ylabel(r"Flux [e$^{-}$/s]")
         plt.xlim(t_flare.min(), t_flare.max())
 
-        plt.savefig(f"../plots/tess/hip67522_flare_model_bestfit_{i}_{sector}.png")
+        plt.savefig(f"plots/diagnostic/tess/hip67522_flare_model_bestfit_{i}_{sector}.png")
 
         # ---------------------------------------------------------------------------------
 
@@ -311,12 +313,12 @@ if __name__ == "__main__":
 
         plt.figure(figsize=(10, 5))
         plt.plot(t_flare, residuals+newmed, ".", markersize=3)
-        plt.plot(lc.time[lc.flag==0], lc.flux[lc.flag==0], ".", markersize=1)
+        plt.plot(lc.time[~mask], lc.flux[~mask], ".", markersize=1)
         plt.axhline(newmed, color="red", lw=1)
         plt.xlabel("Time [BJD]")
         plt.ylabel(r"Flux [e$^{-}$/s]")
         plt.title(title)
-        plt.savefig(f"../plots/tess/hip67522_oflare_model_residuals_{i}_{sector}.png")
+        plt.savefig(f"plots/diagnostic/tess/hip67522_oflare_model_residuals_{i}_{sector}.png")
         # ---------------------------------------------------------------------------------
 
 
@@ -345,7 +347,7 @@ if __name__ == "__main__":
 
             print(f"Equivalent duration: {ED} +/- {EDerr}")
         plt.xlabel("Equivalent Duration [s]")
-        plt.savefig(f"../plots/tess/hip67522_model_posterior_ED_{i}_{sector}.png")
+        plt.savefig(f"plots/diagnostic/tess/hip67522_model_posterior_ED_{i}_{sector}.png")
 
 
 
@@ -432,12 +434,12 @@ if __name__ == "__main__":
         else:
             plt.hist(bol_energies.value.flatten(), histtype="step", bins=50, color="black")
         plt.xlabel("Bolometric Flare Energy [ergs]")
-        plt.savefig(f"../plots/tess/hip6752_model_posterior_bolometric_energy_{i}_{sector}.png")
+        plt.savefig(f"plots/diagnostic/tess/hip6752_model_posterior_bolometric_energy_{i}_{sector}.png")
 
 
 
         # WRITE THE RESULTS TO A CSV FILE ---------------------------------------------------
-        with open(f"../results/tess_flares.csv", "a") as f:
+        with open(f"results/tess_flares.csv", "a") as f:
             if i ==2:
                 tpeaks = [t_peak1, t_peak2, t_peak3]
                 amps = [ampl1, ampl2, ampl3]

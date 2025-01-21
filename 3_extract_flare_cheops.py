@@ -37,8 +37,9 @@ if __name__ == "__main__":
     # if there is no results/cheops_flares.csv file, create it and write the header
     if not os.path.exists("results/cheops_flares.csv"):
         with open("results/cheops_flares.csv", "w") as f:
-            f.write("date,med_flux,amplitude,t_peak_BJD,dur_d,amplitude2,t_peak_BJD2,dur_d2,ED,"
-                    "EDerr,mean_bol_energy,std_bol_energy,ingress,egress,tmin,tmax,parametrization,tot_obs_time_d\n")
+            f.write("date,med_flux,amplitude,t_peak_BJD,dur_d,ED,"
+                    "EDerr,mean_bol_energy,std_bol_energy,tmin,tmax,"
+                    "parametrization\n")
 
     # GET THE IMAGETTE LC -----------------------------------------------------------
     
@@ -61,13 +62,11 @@ if __name__ == "__main__":
     row = df[df["newpipe"] == f"{file}{pi}"].iloc[0]
 
     # get the parameters
-    egress = row.egress
-    ingress = row.ingress 
     tmin = row.tmin
     tmax = row.tmax
     t_peak = row.t_peak
     parametrization = "mendoza2022"
-    two_flare = row.two_flare   
+    
 
     # extend the flare region using tmin and tmax
     extra_flag = (lc.time > tmin) & (lc.time < tmax)
@@ -79,7 +78,8 @@ if __name__ == "__main__":
     newmed = lc.flux[lc.flag==0].median()
     f_flare = lc.flux[lc.flag==1].values - newmed
     t_flare = lc.time[lc.flag==1].values
-    ferr_flare = lc.flux_err[lc.flag==1].values
+    ferr_flare = np.std(lc.flux[lc.flag==0].values)
+    print(f"Flare region flux std: {ferr_flare:.2e}")
 
 
     # WRITE THE FLARE LIGHT CURVE TO A CSV FILE ------------------------------------------------
@@ -315,14 +315,10 @@ if __name__ == "__main__":
 
     # WRITE THE RESULTS TO A CSV FILE ---------------------------------------------------
     with open(f"results/cheops_flares.csv", "a") as f:
-        if two_flare:
-            f.write(f"{file}{pi},{newmed},{ampl},{t_peak},{dur},{ampl2},{t_peak2},{dur2},{ED:.2e}," +
-                    f"{EDerr:.2e},{mean_bol_energy},{std_bol_energy},{ingress},{egress}," + 
-                    f"{tmin},{tmax},{parametrization},{mean_ffactor}\n")
-        else:
-            f.write(f"{file}{pi},{newmed},{ampl},{t_peak},{dur},,,,{ED:.2e}," +
-                    f"{EDerr:.2e},{mean_bol_energy},{std_bol_energy},{ingress},{egress}," + 
-                    f"{tmin},{tmax},{parametrization},{mean_ffactor}\n")
+
+        f.write(f"{file}{pi},{newmed},{ampl},{t_peak},{dur},{ED:.2e}," +
+                f"{EDerr:.2e},{mean_bol_energy},{std_bol_energy}," + 
+                f"{tmin},{tmax},{parametrization}\n")
         
     # ---------------------------------------------------------------------------------
 
