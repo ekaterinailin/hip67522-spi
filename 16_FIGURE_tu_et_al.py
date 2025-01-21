@@ -21,17 +21,17 @@ if __name__ == "__main__":
 
     # Load the data from Tu et al
     print("Loading data from Tu et al. 2020")
-    stars = pd.read_csv("../data/tu/tu2020_stars.tsv", sep="\t", skiprows=45, header=None,
+    stars = pd.read_csv("data/tu/tu2020_stars.tsv", sep="\t", skiprows=45, header=None,
                         names=["TIC", "Teff_K", "logg", "radius_rsun","Prot_d","Nflares",
                             "Nset","freq_per_year", "flag", "simbad",
                             "RA_deg","DEC_deg"])
 
-    flares = pd.read_csv("../data/tu/tu2020_flares.tsv", sep="\t", skiprows=38, header=None, 
+    flares = pd.read_csv("data/tu/tu2020_flares.tsv", sep="\t", skiprows=38, header=None, 
                         names=["TIC","peak_time","peak_flux_erg_s","ed_rec","duration_s"])
 
 
     # get HIP 67522 flare energies
-    hip = pd.read_csv("../results/hip67522_flares.csv")
+    hip = pd.read_csv("results/hip67522_flares.csv")
 
     # convert for FFD in altaipony
     hip["ed_rec"] = hip["mean_bol_energy"]
@@ -50,7 +50,7 @@ if __name__ == "__main__":
 
     # Load the data from Ziegler et al
     print("Loading data from Ziegler et al. 2020")
-    ebs = pd.read_csv("../results/ziegler/EBs.tsv", sep="\t", skiprows=44, header=None,
+    ebs = pd.read_csv("data/ziegler/EBs.tsv", sep="\t", skiprows=44, header=None,
                         names=["TIC", "yr","Obs","Sep","PA","Con","MinSep","Con0.15","Con1","Simbad","RA","DEC"])
     ebs.TIC = ebs.TIC.astype(int)
     etic = ebs.TIC.values
@@ -116,5 +116,5 @@ if __name__ == "__main__":
     plt.xscale("log")
     plt.yscale("log")
 
-    plt.savefig("../plots/paper/tu.png", dpi=300, bbox_inches="tight")
+    plt.savefig("plots/paper/tu.png", dpi=300, bbox_inches="tight")
 

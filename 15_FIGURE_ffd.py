@@ -96,3 +96,7 @@ if __name__ == "__main__":
     print("Full sample alpha median:", np.median(bfa.samples[:,1]))
     print("Full sample alpha std:", np.std(bfa.samples[:,1]))
 
+    # write median alpha to file
+    with open("results/ffd_full_sample_alpha.txt", "w") as f:
+        f.write(str(np.median(bfa.samples[:,1])))
+

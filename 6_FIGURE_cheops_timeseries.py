@@ -82,7 +82,6 @@ if __name__ == "__main__":
         idup, iddown = i, i+3
         ax1, ax2 = flataxes[idup], flataxes[iddown]
 
-        print(original_idx, idup, iddown)
         ax2.set_xlim(dlcs[original_idx]["time"].min(), dlcs[original_idx]["time"].max())
         ax1.set_xticklabels([])
         ax1.tick_params(axis='x', which='both', bottom=False, top=False)
@@ -96,9 +95,7 @@ if __name__ == "__main__":
         mask = np.where(dlcs[original_idx]["transit_mask"].values==True)[0]
         
         if len(mask) > 0:
-            print(mask[0], mask[-1])
             mintrans, maxtrans = dlcs[original_idx].iloc[mask[0]], dlcs[original_idx].iloc[mask[-1]]
-            print(mintrans["time"], maxtrans["time"])
             flataxes[idup].axvspan(mintrans["time"], maxtrans["time"], color="steelblue", alpha=0.3, 
                                    zorder=-10)
             # Plot the second "bottom" subplot (even rows in the new grid)
@@ -121,4 +118,4 @@ if __name__ == "__main__":
         ax.set_xlabel(time_label)
 
 
-    plt.savefig("../plots/paper/cheops_lc.png", dpi=300)
+    plt.savefig("plots/paper/cheops_lc.png", dpi=300)

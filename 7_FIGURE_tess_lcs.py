@@ -16,11 +16,11 @@ import batman
 if __name__ == "__main__":
 
     # get flare data
-    location = "../results/hip67522_flares.csv"
+    location = "results/hip67522_flares.csv"
     flares = pd.read_csv(location)
 
     # get stellar and planet parameters
-    hip67522params = pd.read_csv("../data/hip67522_params.csv")
+    hip67522params = pd.read_csv("data/hip67522_params.csv")
 
     period = hip67522params[hip67522params.param=="orbper_d"].val.values[0]
     midpoint = hip67522params[hip67522params.param=="midpoint_BJD"].val.values[0]
@@ -46,7 +46,7 @@ if __name__ == "__main__":
     for sector, ax in zip([11, 38, 64], axes):
 
         # get LC data
-        hdu = fits.open(f"../data/tess/tess_hip67522_{sector}.fits")
+        hdu = fits.open(f"data/tess/tess_hip67522_{sector}.fits")
 
         t = hdu[1].data["TIME"]
         f = hdu[1].data["PDCSAP_FLUX"]
@@ -106,7 +106,7 @@ if __name__ == "__main__":
 
     plt.tight_layout()
 
-    plt.savefig("../plots/paper/tess_lc.png", dpi=300)
+    plt.savefig("plots/paper/tess_lc.png", dpi=300)
 
 
     # PLOT ALL THE FLARES ---------------------------------------------------------------
@@ -188,7 +188,7 @@ if __name__ == "__main__":
             ax.set_ylabel("Flux [e$^{-}$/s]")
             ax2.set_ylabel("Flux [e$^{-}$/s]")
 
-    plt.savefig("../plots/paper/tess_flares.png", dpi=300, bbox_inches="tight")
+    plt.savefig("plots/paper/tess_flares.png", dpi=300, bbox_inches="tight")
 
     # --------------------------------------------------------------------------------------------
     
