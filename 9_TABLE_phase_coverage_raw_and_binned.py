@@ -22,8 +22,8 @@ if __name__ == "__main__":
     n_bins = 100
 
     # load observed phases
-    tess_phases = np.loadtxt("../data/tess_phases.txt")
-    cheops_phases = np.loadtxt("../data/cheops_phases.txt")
+    tess_phases = np.loadtxt("results/tess_phases.txt")
+    cheops_phases = np.loadtxt("results/cheops_phases.txt")
 
     # attach exposure times: 10 sec for CHEOPS, 120 sec for TESS
     weights = np.concatenate([np.ones_like(cheops_phases) * 10. , 
@@ -62,7 +62,7 @@ if __name__ == "__main__":
     print(string)
 
     # SAVE RAW PHASES
-    df.to_csv("../supplements_for_nature/observing_times.csv", index=False)
+    df.to_csv("results/observing_times.csv", index=False)
     print("Saved raw observing phases to observing_times.csv\n")
 
     # BINNED TABLE

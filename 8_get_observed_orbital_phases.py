@@ -132,5 +132,5 @@ if __name__ == "__main__":
     tess_phases = get_tess_orbital_phases(period, [11, 38, 64], sector_midpoints) 
 
     # write phases to file
-    np.savetxt("data/tess_phases.txt", tess_phases)
-    np.savetxt("data/cheops_phases.txt", cheops_phases)
+    np.savetxt("results/tess_phases.txt", tess_phases)
+    np.savetxt("resultst/cheops_phases.txt", cheops_phases)
