@@ -16,7 +16,6 @@ from astropy.io import fits
 from scipy.optimize import curve_fit
 from scipy.signal import savgol_filter
 
-from funcs.pipe import extract
 
 import batman
 
