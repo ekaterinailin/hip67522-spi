@@ -73,9 +73,10 @@ if __name__ == '__main__':
     # GET THE IMAGE DATA -----------------------------------------------------------
     pi = sys.argv[1]
     file = sys.argv[2]
+    name = f"{file}{pi}"
 
     try:
-        add = sys.argv[3]
+        add = int(sys.argv[3])
         print(f"Detrend light curve segment {add}.")
     except:
         print("Detrend full light curve.")
@@ -109,13 +110,14 @@ if __name__ == '__main__':
 
     # initial mask -- outliers and flagged data points
     init_mask = (f < 2.96e6) & (f > 2.3e6) & (flag==0) #& 
-    
+
     # only for the 102ch flare fit bc the polynomial is slightly off there if we don't split the lc in two
-    if (pi == "ch") & (file==102):
+    if str(name) == "102ch":
+        print(add)
         if add == 1:
-            init_mask = init_mask & (t > 2460413.25)
+            init_mask = init_mask & (t < 2460413.28)
         elif add == 2:
-            init_mask = init_mask & (t < 2460413.25)
+            init_mask = init_mask & (t > 2460413.25)
 
 
     print(f"Initial mask: {np.where(~init_mask)[0].shape[0]} data points")
@@ -128,9 +130,8 @@ if __name__ == '__main__':
     # convert flares["newpipe"] to string
     flares["newpipe"] = flares["newpipe"].astype(str)
 
-    name = f"{file}{pi}"
+    
     if str(name) in flares["newpipe"].values:
-        print(name)
         flare = flares[flares["newpipe"] == name]
         flare_mask = (t > flare["tmin"].values[0]) & (t < flare["tmax"].values[0])
         print(f"Flare mask: {np.where(flare_mask)[0].shape[0]} data points")
@@ -180,9 +181,6 @@ if __name__ == '__main__':
     params.u = [0.22, 0.27]                #limb darkening coefficients [u1, u2]
     params.limb_dark = "quadratic"       #limb darkening model
 
-    # print the parameters
-    print("Batman transit parameters from Barber et al. 2024:")
-    print(vars(params))
 
     m = batman.TransitModel(params, t)    #initializes model
     transit = m.light_curve(params)          #calculates light curve
@@ -398,8 +396,6 @@ if __name__ == '__main__':
         ferr = np.append(ferr[outlier_mask], ferrflare)
         transit_mask = np.append(transit_mask, np.zeros_like(fflare))
         
-
-        print(flag.shape, transit_mask.shape)
         newfitted = np.append(newfitted[outlier_mask], notransitmodelfunc(tflare, *popt))
 
         # add a mask for the flare region
@@ -420,24 +416,22 @@ if __name__ == '__main__':
         ferr = ferr[outlier_mask]
         flag = flag[outlier_mask]
         # transit_mask = transit_mask[outlier_mask]
-       
-        print(flag.shape, transit_mask.shape)
-
+    
         raw_f = raw_f[fullinit_mask][outlier_mask]
 
-    #Print all array shapes
-    print("Final array shapes:")
-    print("Time: ", t.shape)
-    print("Flux: ", ff.shape)
-    print("Model: ", newfitted.shape)
-    print("Flux error: ", ferr.shape)
-    print("Roll: ", roll.shape)
-    print("dT: ", dT.shape)
-    print("Flag: ", flag.shape)
-    print("Background: ", bg.shape)
-    print("Xc: ", xc.shape)
-    print("Yc: ", yc.shape)
-    print("Raw flux: ", raw_f.shape)
+    # #Print all array shapes
+    # print("Final array shapes:")
+    # print("Time: ", t.shape)
+    # print("Flux: ", ff.shape)
+    # print("Model: ", newfitted.shape)
+    # print("Flux error: ", ferr.shape)
+    # print("Roll: ", roll.shape)
+    # print("dT: ", dT.shape)
+    # print("Flag: ", flag.shape)
+    # print("Background: ", bg.shape)
+    # print("Xc: ", xc.shape)
+    # print("Yc: ", yc.shape)
+    # print("Raw flux: ", raw_f.shape)
 
 
     # sort all arrays by time
