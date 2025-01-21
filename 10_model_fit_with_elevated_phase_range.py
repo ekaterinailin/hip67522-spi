@@ -31,19 +31,28 @@ import matplotlib.pyplot as plt
 
 if __name__ == "__main__":
 
+    # make diagnostic plots?
+    diagnostics = bool(int(os.sys.argv[2]))
+
+    if diagnostics:
+        # check if plots/diagnostic/poisson_model exists
+        # otherwise create it
+        if not os.path.exists("plots/diagnostic/poisson_model"):
+            os.makedirs("plots/diagnostic/poisson_model")
 
     # read phases from file
-    tess_phases = np.loadtxt("../data/tess_phases.txt")
-    cheops_phases = np.loadtxt("../data/cheops_phases.txt")
-    flares = pd.read_csv("../results/flare_phases_and_energies.csv")
-    flares = flares.sort_values("ed_rec", ascending=True).iloc[1:] # exclude the smallest flare
+    tess_phases = np.loadtxt("results/tess_phases.txt")
+    cheops_phases = np.loadtxt("results/cheops_phases.txt")
+    flares = pd.read_csv("results/hip67522_flares.csv")
+    flares = flares.sort_values("mean_bol_energy", ascending=True).iloc[1:] # exclude the smallest flare
 
     # weigh by observing cadence
-    weights = np.concatenate([np.ones_like(cheops_phases) * 10. / 60. / 60. / 24., np.ones_like(tess_phases) * 2. / 60. / 24.] )
+    weights = np.concatenate([np.ones_like(cheops_phases) * 10. / 60. / 60. / 24.,
+                              np.ones_like(tess_phases) * 2. / 60. / 24.] )
     obs_phases = np.concatenate([cheops_phases, tess_phases])
 
     # flare phases
-    phases = flares.phase.values
+    phases = flares.orb_phase.values
 
     # shift by 0.5
     obs_phases = (obs_phases + 0.5) % 1
@@ -177,24 +186,24 @@ if __name__ == "__main__":
 
     # ----------------------------------------------------------------------------
     # MCMC CHAIN PLOTS -----------------------------------------------------------
-
-    fig, axes = plt.subplots(ndim, figsize=(10, 7), sharex=True)
     mod_samples = mod_sampler.get_chain(discard=80000)
-    labels = [r"$\lambda_0$", r"$\lambda_1$", r"$\phi_0$",r"$\Delta\phi$",]
-    for i in range(ndim):
-        ax = axes[i]
-        ax.plot(mod_samples[:, :, i], "k", alpha=0.3)
-        ax.set_xlim(0, len(mod_samples))
-        ax.set_ylabel(labels[i])
-        ax.yaxis.set_label_coords(-0.05, 0.5)
 
-    axes[-1].set_xlabel("step number")
+    if diagnostics:
+        fig, axes = plt.subplots(ndim, figsize=(10, 7), sharex=True)
+        
+        labels = [r"$\lambda_0$", r"$\lambda_1$", r"$\phi_0$",r"$\Delta\phi$",]
+        for i in range(ndim):
+            ax = axes[i]
+            ax.plot(mod_samples[:, :, i], "k", alpha=0.3)
+            ax.set_xlim(0, len(mod_samples))
+            ax.set_ylabel(labels[i])
+            ax.yaxis.set_label_coords(-0.05, 0.5)
 
-    plt.tight_layout()
-    plt.savefig(f"../plots/poisson_model/{nbinedges}_chain_modulated.png", dpi=300)
+        axes[-1].set_xlabel("step number")
 
-    # save the samples to file
-    np.save(f"../results/{nbinedges}_modulated_samples.npy", mod_samples)
+        plt.tight_layout()
+        plt.savefig(f"plots/diagnostic/poisson_model/{nbinedges}_chain_modulated.png", dpi=300)
+
 
     # ----------------------------------------------------------------------------
 
@@ -204,13 +213,16 @@ if __name__ == "__main__":
     # # plot corner
     mod_flat_samples = mod_sampler.get_chain(discard=80000, thin=15, flat=True)
 
-    # increase font size to 20
-    plt.rcParams.update({'font.size': 18})
 
-    fig = corner.corner(mod_flat_samples, labels=labels)
-    plt.tight_layout()
+    if diagnostics:
 
-    plt.savefig(f"../plots/poisson_model/{nbinedges}_corner_modulated.png", dpi=300)
+        # increase font size to 20
+        plt.rcParams.update({'font.size': 18})
+
+        fig = corner.corner(mod_flat_samples, labels=labels)
+        plt.tight_layout()
+
+        plt.savefig(f"plots/diagnostic/poisson_model/{nbinedges}_corner_modulated.png", dpi=300)
 
     # ----------------------------------------------------------------------------
 
@@ -221,7 +233,7 @@ if __name__ == "__main__":
     df = pd.DataFrame(mod_flat_samples, columns=["l0", "l1", "phi0", "dphi"])
 
     # save to file
-    df.to_csv(f"../results/modulated_samples.csv", index=False)
+    df.to_csv(f"results/modulated_samples.csv", index=False)
 
     # ----------------------------------------------------------------------------
 
@@ -292,17 +304,18 @@ if __name__ == "__main__":
     # ---------------------------------------------------------------------------
     # PLOT CHAIN ----------------------------------------------------------------
 
-    # plot chains
-    fig, axes = plt.subplots(ndim, figsize=(10, 3), sharex=True)
-    unmod_samples = unmod_sampler.get_chain()
-    unmod_label = labels[0]
-    axes.plot(unmod_samples[:,:,  0], "k", alpha=0.3)
-    axes.set_xlim(0, len(unmod_samples))
-    axes.set_ylabel(unmod_label)
-    axes.yaxis.set_label_coords(-0.05, 0.5)
-    axes.set_xlabel("step number")
-    plt.tight_layout()
-    plt.savefig(f"../plots/poisson_model/{nbinedges}_chain_unmodulated.png", dpi=300)
+    if diagnostics:
+        # plot chains
+        fig, axes = plt.subplots(ndim, figsize=(10, 3), sharex=True)
+        unmod_samples = unmod_sampler.get_chain()
+        unmod_label = labels[0]
+        axes.plot(unmod_samples[:,:,  0], "k", alpha=0.3)
+        axes.set_xlim(0, len(unmod_samples))
+        axes.set_ylabel(unmod_label)
+        axes.yaxis.set_label_coords(-0.05, 0.5)
+        axes.set_xlabel("step number")
+        plt.tight_layout()
+        plt.savefig(f"plots/diagnostic/poisson_model/{nbinedges}_chain_unmodulated.png", dpi=300)
 
     # ---------------------------------------------------------------------------
 
@@ -321,47 +334,50 @@ if __name__ == "__main__":
 
     # save to file
     df["lambda0_unmod"] = lambda0_mcmc
-    df.to_csv(f"../results/bestfit_parameters.csv")
+    df.to_csv(f"results/bestfit_parameters.csv")
 
     # ----------------------------------------------------------------------------
     
     # ----------------------------------------------------------------------------
     # CORNER PLOT ----------------------------------------------------------------
 
-    # corner plot
-    fig = corner.corner(unmod_flat_samples, labels=[unmod_label])
-    plt.tight_layout()
-    plt.savefig(f"../plots/poisson_model/{nbinedges}_corner_unmodulated.png", dpi=300)
+    if diagnostics:
+        # corner plot
+        fig = corner.corner(unmod_flat_samples, labels=[unmod_label])
+        plt.tight_layout()
+        plt.savefig(f"plots/diagnostic/poisson_model/{nbinedges}_corner_unmodulated.png", dpi=300)
 
     # ----------------------------------------------------------------------------
 
     # ----------------------------------------------------------------------------
     # SAVE THE CHAIN -------------------------------------------------------------
 
-    # make the flat samples a pandas dataframe
-    df = pd.DataFrame(unmod_flat_samples, columns=["l0"])
+    if diagnostics:
+        # make the flat samples a pandas dataframe
+        df = pd.DataFrame(unmod_flat_samples, columns=["l0"])
 
-    # save to file
-    df.to_csv(f"../results/unmodulated_samples.csv", index=False)
+        # save to file
+        df.to_csv(f"results/unmodulated_samples.csv", index=False)
 
     # ----------------------------------------------------------------------------
     # PLOT BOTH MODELS -----------------------------------------------------------
 
-    # make the fontsize small again
-    plt.rcParams.update({'font.size': 12})
+    if diagnostics:
+        # make the fontsize small again
+        plt.rcParams.update({'font.size': 12})
 
-    plt.figure(figsize=(6, 5))
-    plt.plot(binmids, unmodulated_model(*unmod_best_median), 
-             label=r"$M_{\text{unmod}}$ - without clustering", c="black", linestyle=":")
-    plt.plot(binmids, modulated_model(binmids, *mod_best_median), 
-             label=r"$M_{\text{mod}}$ - with clustering", c="black", linestyle="--")
-    plt.plot(binmids, hist, label="observed", c="magenta", zorder=-10)
-    plt.legend(frameon=False, loc=2)
-    plt.xlabel("Orbital phase")
-    plt.xlim(0,1)
-    plt.ylabel("Number of flares")
-    plt.tight_layout()
-    plt.savefig(f"../plots/poisson_model/{nbinedges}_best_median_fit.png", dpi=300)
+        plt.figure(figsize=(6, 5))
+        plt.plot(binmids, unmodulated_model(*unmod_best_median), 
+                label=r"$M_{\text{unmod}}$ - without clustering", c="black", linestyle=":")
+        plt.plot(binmids, modulated_model(binmids, *mod_best_median), 
+                label=r"$M_{\text{mod}}$ - with clustering", c="black", linestyle="--")
+        plt.plot(binmids, hist, label="observed", c="magenta", zorder=-10)
+        plt.legend(frameon=False, loc=2)
+        plt.xlabel("Orbital phase")
+        plt.xlim(0,1)
+        plt.ylabel("Number of flares")
+        plt.tight_layout()
+        plt.savefig(f"plots/diagnostic/poisson_model/{nbinedges}_best_median_fit.png", dpi=300)
 
 
 
@@ -381,10 +397,6 @@ if __name__ == "__main__":
     chisq_mod /= dof
     chisq_unmod /= dof
 
-    # n bins, chisq/dof_mod, chisq/dof_unmod
-    # 30: (0.864040631852652, 14.331350204160442)
-    # 200: (0.6923462715743284, 1.0254345758724361)
-    # 400: (0.7665232907316073, 0.5100476296357096)
 
     print(f"Chisq/dof modulated: {chisq_mod}")
     print(f"Chisq/dof unmodulated: {chisq_unmod}")

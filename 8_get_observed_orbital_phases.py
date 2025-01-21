@@ -133,4 +133,4 @@ if __name__ == "__main__":
 
     # write phases to file
     np.savetxt("results/tess_phases.txt", tess_phases)
-    np.savetxt("resultst/cheops_phases.txt", cheops_phases)
+    np.savetxt("results/cheops_phases.txt", cheops_phases)
