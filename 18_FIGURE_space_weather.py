@@ -78,7 +78,7 @@ if __name__ == "__main__":
     print("Minimum flare energy in sample: ", Emin)
 
     # plot range of factors
-    factors = np.logspace(-2, 0, 15)
+    factors = np.logspace(-2, 0, 11)
     angles = np.linspace(0, 180, 100)
 
     params = (flare_rate, alpha, Emin, Emax, a, Rstar, planet_radius, planet_mass)
@@ -97,15 +97,13 @@ if __name__ == "__main__":
                   f"to {1000 / (1+int1):.0f}-{1000 / (1+int2):.0f} Myr.")
         else:
             c="navy"
-            plt.plot(angles, 
-                    get_mass_loss_rate(f, angles, *params).value / thao_dot_m, 
-                    label=f, alpha=f**(1/4), c=c)
+            ml = get_mass_loss_rate(f, angles, *params).value / thao_dot_m
+            plt.plot(angles, ml, label=f, alpha=f**(1/4), c=c)
 
         # annotate with f
-        x, y = 183 , get_mass_loss_rate(f, angles[-1], *params).value / thao_dot_m
-        plt.text(x, y, f"{f:.2f}", color=c, alpha=0.9, fontsize=11)
+        plt.text(183 , ml[-1], f"{f:.2f}", color=c, alpha=0.9, fontsize=11)
 
-    plt.text(183, 1.9, r"$\eta$", color="navy", fontsize=13, alpha=0.9)
+    plt.text(183, 2, r"$\eta$", color="navy", fontsize=13, alpha=0.9)
 
 
     # fill between 50 and 80 deg
