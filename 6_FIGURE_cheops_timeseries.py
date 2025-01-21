@@ -21,16 +21,18 @@ plt.rcParams.update({'font.size': 12})
 if __name__ == "__main__":
 
     # load the file names
-    files = np.loadtxt("files.txt", dtype=str)
+    files = np.loadtxt("data/cheops_files.txt", dtype=str)
 
     # read the flare table
-    flares = pd.read_csv("../results/cheops_flares.csv")
+    flares = pd.read_csv("results/cheops_flares.csv")
 
     # read in all the de-trended light curves
     dlcs = []
     for pi, file in files:
-        location = f"../data/hip67522/pipe_HIP67522/HIP67522_{file}{pi}_detrended_lc.csv"
-        dlcs.append(pd.read_csv(location))
+        location = f"results/cheops/HIP67522_{file}{pi}_detrended_lc.csv"
+        # df = pd.read_csv(location)
+        # df = df[df["flag"] == 0]
+        dlcs.append(pd.read_csv(location))  
     
     # make a list of the first time stamp in each lc in lcs and sort the lcs by this time
     t0s = [lc["time"].min() for lc in dlcs]

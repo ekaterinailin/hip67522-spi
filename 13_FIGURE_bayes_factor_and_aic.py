@@ -1,6 +1,11 @@
-# -*- coding: utf-8 -*-
 """
-@author: Ekaterina Ilin, 2025, ilin@astron.nl
+UTF-8, Python 3
+
+------------
+HIP 67522
+------------
+
+Ekaterina Ilin, 2025, MIT License, ilin@astron.nl
 
 Take the Bayes Factor and AIC output tables and plot the results.
 Get some diagnostics.
@@ -12,12 +17,17 @@ import matplotlib.pyplot as plt
 if __name__ == "__main__":
 
     # read ../results/bayes_factor.txt
-    df = pd.read_csv('../results/bayes_factor.txt', sep=',', header=None, skiprows=32, 
+    df = pd.read_csv('results/bayes_factor.txt', sep=',', header=None, #skiprows=32, 
                     names = ["nflares","nbinedges","maxlambda0","maxlambda1","l0gridsize",
                             "l1gridsize","phi0gridsize","dphigridsize","K", "marglnLmod", 
                             "marglnLunmod", "minlambda0","minlambda1"] )
     # read AIC values
-    aics = pd.read_csv('../results/bestfit_parameters_aic.txt')
+    aics = pd.read_csv('results/bestfit_parameters_aic.txt', header=None,
+                       names=["nbinedges", "AICmod", "AICunmod","deltaAIC","logmod","logunmod",
+                              "l0mod","l1","phi0","dphi","l0unmod"])
+
+    df = df[df["nbinedges"] > 50]
+    aics = aics[aics["nbinedges"] > 50]
 
     print("\nBayes Factor statistics:")
     print(df["K"].describe())
@@ -33,7 +43,7 @@ if __name__ == "__main__":
     ax1.set_ylabel(r'$K$')
     ax1.set_ylim(0,19)
 
-    ax2.scatter(aics["nbins"] - 1, aics["deltaAIC"], s=10, marker='x', color="navy")
+    ax2.scatter(aics["nbinedges"] - 1, aics["deltaAIC"], s=10, marker='x', color="navy")
     ax2.set_ylabel(r'$\Delta$ AIC')
     ax2.set_ylim(-12,0)
 
@@ -48,6 +58,6 @@ if __name__ == "__main__":
     # remove the 0 tick from ax1 y-axis
     ax1.yaxis.get_major_ticks()[0].label1.set_visible(False)
 
-    plt.savefig('../plots/paper/aic_and_bayes_factor.png', dpi=300)
+    plt.savefig('plots/paper/aic_and_bayes_factor.png', dpi=300)
 
     
