@@ -10,6 +10,8 @@ Ekaterina Ilin, 2025, MIT License, ilin@astron.nl
 
 Calculate the power of star-planet interactions for the HIP 67522 system,
 and compare it to the observed SPI flux from flares, and LX.
+
+Functions are the same as in Ilin+2024
 """
 
 
@@ -406,7 +408,7 @@ if __name__ == "__main__":
 
     # GET STELLAR AND PLANET PARAMETERS -----------------------------------------------------
 
-    hip67522params = pd.read_csv("../data/hip67522_params.csv")
+    hip67522params = pd.read_csv("data/hip67522_params.csv")
 
     period = hip67522params[hip67522params.param=="orbper_d"].val.values[0]
     prot = hip67522params[hip67522params.param=="rotper_d"].val.values[0]
@@ -418,7 +420,7 @@ if __name__ == "__main__":
 
 
     # flares table 
-    flares = pd.read_csv("../results/hip67522_flares.csv").sort_values("mean_bol_energy", ascending=True)
+    flares = pd.read_csv("results/hip67522_flares.csv").sort_values("mean_bol_energy", ascending=True)
 
 
 
@@ -430,8 +432,9 @@ if __name__ == "__main__":
     # flux in excess of lambda0
     lambd = 0.5 / u.d
 
-    # power law exponent of FFD
-    alpha = 1.5
+    # power law exponent of FFD read from results/ffd_full_sample_alpha.txt
+    alpha = np.loadtxt("results/ffd_full_sample_alpha.txt").astype(float)
+    print(f"Power law exponent of full sample: {alpha:.2f}")
 
     # planet radius in units of stellar radii
     rp_in_stars = 0.0668
@@ -493,7 +496,7 @@ if __name__ == "__main__":
     plt.xscale("log")
     plt.xlabel("Planet magnetic field [G]")
     plt.ylabel("Power of star-planet interactions [erg/s]")
-    plt.savefig("../plots/pspi_aw.png")
+    plt.savefig("plots/pspi_aw.png")
 
 
     print(f"Minimum power of star-planet interactions: {minspi:.2e} erg/s")
@@ -512,9 +515,10 @@ if __name__ == "__main__":
     # calculate beta of power law based on rate at threshold
     beta = lambd * (alpha -1) / (Emin**(1-alpha)) 
 
+    Es = np.logspace(32, 33, 100)
 
     # show that the lower energy range does not matter unless it's close to Emax
-    for E in np.logspace(32, 33, 50):
+    for E in Es:
 
         # integral over FFD
         tot_flux =  beta.value * (Emaxs**(-alpha + 2) - E**(-alpha + 2))  / (-alpha + 2)
@@ -537,7 +541,11 @@ if __name__ == "__main__":
     # add line for upper limit on SPI flux based on LX
     plt.axhline(lx, color="black", linestyle=":", label=r"Upper limit $L_{\rm SPI} < L_{\rm X}$")
 
-    plt.axhline(4.3e29) #-- this where we claim the power is
+    # plt.axhline(4.8e29) #-- this where the power quoted in the paper is
+    # calculate tot_flux closest to Emax
+    spi_flux = tot_flux[np.argmin(np.abs(Emaxs-Emax.value))]
+    print(f"SPI flux: {spi_flux:.2e} erg/s")
+
 
     # layout
     plt.xscale("log")
@@ -546,7 +554,7 @@ if __name__ == "__main__":
     plt.xlabel(r"Maximum planet-induced flare energy $E_{\rm max}$ [erg]")
     plt.xlim(Emaxs[0], Emaxs[-1])
     plt.legend(loc=(0.33, 0.05), frameon=False, fontsize=11.5)  
-    plt.savefig("../plots/paper/SPI_flux_vs_Emax.png", dpi=300)
+    plt.savefig("plots/paper/SPI_flux_vs_Emax.png", dpi=300)
 
     # what is the frequency of flares above Emax * X?
     X = 1
