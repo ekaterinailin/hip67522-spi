@@ -537,7 +537,7 @@ if __name__ == "__main__":
     # add line for upper limit on SPI flux based on LX
     plt.axhline(lx, color="black", linestyle=":", label=r"Upper limit $L_{\rm SPI} < L_{\rm X}$")
 
-    # plt.axhline(3e29) -- this where we claim the power is
+    plt.axhline(4.3e29) #-- this where we claim the power is
 
     # layout
     plt.xscale("log")

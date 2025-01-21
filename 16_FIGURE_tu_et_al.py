@@ -80,7 +80,7 @@ if __name__ == "__main__":
 
     # PLOT THE FIGURE -------------------------------------------------------------
 
-    plt.figure(figsize=(6,4))
+    plt.figure(figsize=(6,5))
 
     # make an FFD for hip and plot it
     ffdhip = FFD(hip[hip.ed_rec >= emin])
@@ -94,8 +94,8 @@ if __name__ == "__main__":
 
     # plot the limits
     plt.axvline(emin, c="navy", linestyle="--", alpha=0.8)
-    plt.axhline(4, c="navy", linestyle="--", alpha=0.8)
-    plt.text(emin*1.1, 4*1.1, f"flare rate upper limit", fontsize=11, va="bottom", ha="left")
+    plt.axhline(2, c="navy", linestyle="--", alpha=0.8)
+    plt.text(emin*1.1, 2*1.05, f"flare rate upper limit", fontsize=11, va="bottom", ha="left")
 
 
     # make legend handles ------
@@ -103,10 +103,10 @@ if __name__ == "__main__":
                         label=f"Tu et al. 2020 (N={len(eds)})")
 
     handlehip = plt.Line2D([0], [0], marker='o', color='w', markerfacecolor='navy', markersize=10,
-                        label="HIP 67522, 5650 K, 1.41 d")
+                        label="HIP 67522, 5650 K, 1.42 d")
 
 
-    plt.legend(handles=[handle, handlehip], loc=(0.52, 0.73), frameon=False)
+    plt.legend(handles=[handle, handlehip], loc=(0.48, 0.85), frameon=False)
     # ----------------------------
 
     plt.xlabel(r"$E_{\rm flare}$ [erg]", fontsize=12)

@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 """
 @author: Alexis Brandeker, alexis@astro.su.se
+
+Script used to reduce the CHEOPS light curves with PIPE.
 """
 
 if __name__ == '__main__': # This line is to break loops when multiprocessing
