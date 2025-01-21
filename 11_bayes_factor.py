@@ -1,10 +1,66 @@
+"""
+UTF-8, Python 3.11.7
+
+------------
+HIP 67522
+------------
+
+Ekaterina Ilin, 2025, MIT License, ilin@astron.nl
+
+
+Calculate the Bayes Factor
+"""
 
 import numpy as np
+import pandas as pd
 import concurrent.futures
 
 from math import factorial
 
 import os
+
+def compute_integral(num, phi0n, dphin, lambda0n_split, lambda0n, lambda0max, 
+                        lambda1n, lambda1max, min_lambda0, min_lambda1, log_probability_mod):
+    
+    phi0 = np.linspace(0, 1, phi0n)
+    dphi = np.linspace(0, max_dphi, dphin)
+    # set what range of lambda to cover in this split
+    lambda0s = np.linspace(min_lambda0 + num/lambda0n*(lambda0max - min_lambda0), 
+                            min_lambda0 + (num+lambda0n_split)/lambda0n*(lambda0max - min_lambda0), 
+                            lambda0n_split)
+    lambda1s = np.linspace(min_lambda1, lambda1max, lambda1n)
+    logls = np.zeros((lambda0n_split, lambda1n, phi0n, dphin))
+    
+    print("lambda0: ", lambda0s)
+
+    for i in range(lambda0n_split): 
+        print(i, nbins)
+        for j in range(lambda1n):
+            for k in range(phi0n):
+                for l in range(dphin):
+                    logl = log_probability_mod([lambda0s[i], lambda1s[j], phi0[k], dphi[l]])
+                    logls[i, j, k, l] = logl
+    
+    # Perform integration using np.trapz
+    integral = np.trapz(np.trapz(np.trapz(np.trapz(np.exp(logls), dphi), phi0), lambda1s), lambda0s)
+    
+    return integral
+
+def main(nums, phi0n, dphin, lambda0n_split, lambda0n, lambda0max,
+            lambda1n, lambda1max, min_lambda0, min_lambda1, log_probability_mod):
+    integrals = 0
+    # Use ProcessPoolExecutor for parallel computation
+    with concurrent.futures.ProcessPoolExecutor() as executor:
+        # Submit tasks for each l in the nums list
+        futures = [executor.submit(compute_integral, num, phi0n, dphin, 
+                                    lambda0n_split, lambda0n, lambda0max, lambda1n, 
+                                    lambda1max,  min_lambda0, min_lambda1,log_probability_mod) for l, num in enumerate(nums)]
+        
+        # Wait for all tasks to finish and collect the results
+        for future in concurrent.futures.as_completed(futures):
+            integrals += future.result()
+        print(integrals)
+    return integrals
 
 if __name__ == "__main__":
 
@@ -12,8 +68,8 @@ if __name__ == "__main__":
     fake = False
 
     # read phases from file
-    tess_phases = np.loadtxt("tess_phases.txt")
-    cheops_phases = np.loadtxt("cheops_phases.txt")
+    tess_phases = np.loadtxt("results/tess_phases.txt")
+    cheops_phases = np.loadtxt("results/cheops_phases.txt")
 
     # weigh by observing cadence
     weights = np.concatenate([np.ones_like(cheops_phases) * 10. / 60. / 60. / 24., 
@@ -21,10 +77,10 @@ if __name__ == "__main__":
     obs_phases = np.concatenate([cheops_phases, tess_phases])
 
     # flare phases
-    phases = np.array([0.61248919, 0.81165721, 0.01788908, 0.0296636,  0.05760315, 0.04067287,
-    0.73005547, 0.94878914, 0.11323833, 0.20031473, 0.15087211, 0.04514247,
-    0.02527212, 0.05657772, 0.06247738, ]) 
 
+    flares = pd.read_csv("results/hip67522_flares.csv")
+    flares = flares.sort_values("mean_bol_energy", ascending=True).iloc[1:] # exclude the smallest flare
+    phases = flares.orb_phase.values
 
     # shift by 0.5
     obs_phases = (obs_phases + 0.5) % 1
@@ -71,12 +127,6 @@ if __name__ == "__main__":
         rate = unmodulated_model(fake_l) # get flare rates for the unmodulated case
 
         hist = np.array([np.random.poisson(r) for r in rate]) # make histogram of fake observed flares
-
-        # save rate and hist to fake_bayes_factors_samples.txt
-        with open("fake_bayes_factors_samples.txt", "a") as f:
-            string = f"{rate} {hist}\n"
-            f.write(string)
-            print(string)
 
     else:
         hist, bins = np.histogram(phases, bins=bins)
@@ -141,63 +191,23 @@ if __name__ == "__main__":
         if not np.isfinite(lp):
             return -np.inf
         return lp + log_likelihood_unmod(params)
+    
 
-    ranged =  [max_lambda0, max_lambda1, 400, 400, 100, 50]
+    # NOW CALCULATE THE BAYES FACTOR USING PARALLEL COMPUTATION:
 
-    integrals = 0
-    lambda0max, lambda1max, lambda0n, lambda1n, phi0n, dphin = ranged
+    lambda0max, lambda1max, lambda0n, lambda1n, phi0n, dphin = max_lambda0, max_lambda1, 400, 400, 100, 50
 
-    lambda0n_split = 10
+    lambda0n_split = 10 # split the 400 grid in 10 x 40: will need 40 cores to work
+
+    # set up iterator
     nums = np.arange(0, lambda0n, lambda0n_split)
     print(nums)
 
-    def compute_integral(num, phi0n, dphin, lambda0n_split, lambda0n, lambda0max, lambda1n, lambda1max, min_lambda0, min_lambda1, log_probability_mod):
-        phi0 = np.linspace(0, 1, phi0n)
-        dphi = np.linspace(0, max_dphi, dphin)
-        lambda0s = np.linspace(min_lambda0 + num/lambda0n*(lambda0max - min_lambda0), 
-                               min_lambda0 + (num+lambda0n_split)/lambda0n*(lambda0max - min_lambda0), 
-                               lambda0n_split)
-        lambda1s = np.linspace(min_lambda1, lambda1max, lambda1n)
-        logls = np.zeros((lambda0n_split, lambda1n, phi0n, dphin))
-        
-        print("lambda0: ", lambda0s)
-        # print("lambda1: ", lambda1s)
-        # print("phi0: ", phi0)
-        # print("dphi: ", dphi)
-        for i in range(lambda0n_split): 
-            print(i, nbins)
-            for j in range(lambda1n):
-                for k in range(phi0n):
-                    for l in range(dphin):
-                        logl = log_probability_mod([lambda0s[i], lambda1s[j], phi0[k], dphi[l]])
-                        logls[i, j, k, l] = logl
-        
-        # Perform integration using np.trapz
-        integral = np.trapz(np.trapz(np.trapz(np.trapz(np.exp(logls), dphi), phi0), lambda1s), lambda0s)
-        
-        return integral
+    # get the marginal likelihood for the modulated model
+    integralmod = main(nums, phi0n, dphin, lambda0n_split, lambda0n, lambda0max,
+                    lambda1n, lambda1max,  min_lambda0, min_lambda1, log_probability_mod)
 
-    def main(nums, phi0n, dphin, lambda0n_split, lambda0n, lambda0max,
-             lambda1n, lambda1max, min_lambda0, min_lambda1, log_probability_mod):
-        integrals = 0
-        # Use ProcessPoolExecutor for parallel computation
-        with concurrent.futures.ProcessPoolExecutor() as executor:
-            # Submit tasks for each l in the nums list
-            futures = [executor.submit(compute_integral, num, phi0n, dphin, 
-                                       lambda0n_split, lambda0n, lambda0max, lambda1n, 
-                                       lambda1max,  min_lambda0, min_lambda1,log_probability_mod) for l, num in enumerate(nums)]
-            
-            # Wait for all tasks to finish and collect the results
-            for future in concurrent.futures.as_completed(futures):
-                integrals += future.result()
-            print(integrals)
-        return integrals
-
-    # Usage example (ensure to pass appropriate parameters):
-    integrals = main(nums, phi0n, dphin, lambda0n_split, lambda0n, lambda0max,
-                    lambda1n, lambda1max,  min_lambda0, min_lambda1,log_probability_mod)
-
-
+    # get the marginal likelihood for the unmodulated model
     logsunmod = np.zeros(lambda0n)
     lambda0s = np.linspace(min_lambda0, lambda0max, lambda0n)
     print(lambda0s)
@@ -206,13 +216,13 @@ if __name__ == "__main__":
         logsunmod[i] = logl
     integralunmod = np.trapz(np.exp(logsunmod), lambda0s)
 
-    bayes_factor = integrals / integralunmod
+    bayes_factor = integralmod / integralunmod
 
 
-    with open("bayes_factor_factor2.txt", "a") as f:
+    with open("results/bayes_factor.txt", "a") as f:
         string = f"{len(phases)},{nbins},{lambda0max},{lambda1max}," \
                  f"{lambda0n},{lambda1n},{phi0n},{dphin},{bayes_factor}," \
-                 f"{integrals},{integralunmod},{min_lambda0},{min_lambda1}\n"
+                 f"{integralmod},{integralunmod},{min_lambda0},{min_lambda1}\n"
         f.write(string)
         print(string)
 

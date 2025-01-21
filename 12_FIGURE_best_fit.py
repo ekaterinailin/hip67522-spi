@@ -29,15 +29,15 @@ if __name__ == "__main__":
     # read phases from file
     tess_phases = np.loadtxt("../data/tess_phases.txt")
     cheops_phases = np.loadtxt("../data/cheops_phases.txt")
-    flares = pd.read_csv("../results/flare_phases_and_energies.csv")
-    flares = flares.sort_values("ed_rec", ascending=True).iloc[1:] # exclude the smallest flare
+    flares = pd.read_csv("results/hip67522_flares.csv")
+    flares = flares.sort_values("mean_bol_energy", ascending=True).iloc[1:] # exclude the smallest flare
 
     # weigh by observing cadence
     weights = np.concatenate([np.ones_like(cheops_phases) * 10. / 60. / 60. / 24., np.ones_like(tess_phases) * 2. / 60. / 24.] )
     obs_phases = np.concatenate([cheops_phases, tess_phases])
 
     # flare phases
-    phases = flares.phase.values
+    phases = flares.orb_phase.values
 
     # shift by 0.5
     obs_phases = (obs_phases + 0.5) % 1
