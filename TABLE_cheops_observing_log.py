@@ -11,14 +11,19 @@ This script reads the observing log of CHEOPS observations of HIP 67522 and conv
 
 """
 
+import os
 import pandas as pd
 import numpy as np
 
 
 if __name__ == "__main__":
 
+    # if tables/ does not exist, create it
+    if not os.path.exists("tables"):
+        os.makedirs("tables")
 
-    cheops = pd.read_csv("../data/cheops_all_timeseries.csv")
+
+    cheops = pd.read_csv("data/cheops/cheops_all_timeseries.csv")
 
     # count all the data points
     print("Total number of data points: ", cheops.shape[0])
@@ -28,7 +33,7 @@ if __name__ == "__main__":
     print(f"Total observed time: {total_covered:.2f} days")
 
 
-    df = pd.read_csv("../data/CHEOPS_observing_log.csv")
+    df = pd.read_csv("data/cheops/CHEOPS_observing_log.csv")
 
     df["File Key"] = ("CH\_PR" + df["Visit ID"].astype(str).apply(lambda x: x[:6]) + 
             "\_TG" + df["Visit ID"].astype(str).apply(lambda x: x[6:]) + 
@@ -75,7 +80,7 @@ if __name__ == "__main__":
     print(table)
 
     # save table to file
-    with open("../tables/cheops_observing_log.tex", "w") as f:
+    with open("tables/cheops_observing_log.tex", "w") as f:
         f.write(table)
 
         

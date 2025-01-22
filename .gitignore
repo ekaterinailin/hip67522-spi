@@ -1,5 +1,6 @@
 *.pyc
 plots/*
-results/*
+results/cheops/*
+results/tess/*
 data/cheops/*
 data/tess/*
