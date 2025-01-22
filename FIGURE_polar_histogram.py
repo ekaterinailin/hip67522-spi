@@ -18,23 +18,23 @@ from matplotlib.patches import FancyArrowPatch, Circle
 
 if __name__ == "__main__":
     
-    # GET STELLAR AND PLANET PARAMETERS -----------------------------------------------------
+    # # GET STELLAR AND PLANET PARAMETERS -----------------------------------------------------
 
-    hip67522params = pd.read_csv("../data/hip67522_params.csv")
+    # hip67522params = pd.read_csv("ata/hip67522_params.csv")
 
-    period = hip67522params[hip67522params.param=="orbper_d"].val.values[0]
-    midpoint = hip67522params[hip67522params.param=="midpoint_BJD"].val.values[0]
-    teff = hip67522params[hip67522params.param=="teff_K"].val.values[0]
-    tefferr = hip67522params[hip67522params.param=="teff_K"].err.values[0]
-    radius = hip67522params[hip67522params.param=="radius_rsun"].val.values[0]
-    radiuserr = hip67522params[hip67522params.param=="radius_rsun"].err.values[0]
+    # period = hip67522params[hip67522params.param=="orbper_d"].val.values[0]
+    # midpoint = hip67522params[hip67522params.param=="midpoint_BJD"].val.values[0]
+    # teff = hip67522params[hip67522params.param=="teff_K"].val.values[0]
+    # tefferr = hip67522params[hip67522params.param=="teff_K"].err.values[0]
+    # radius = hip67522params[hip67522params.param=="radius_rsun"].val.values[0]
+    # radiuserr = hip67522params[hip67522params.param=="radius_rsun"].err.values[0]
 
     # ----------------------------------------------------------------------------------------
 
     # read phases from file
-    tess_phases = np.loadtxt("../data/tess_phases.txt")
-    cheops_phases = np.loadtxt("../data/cheops_phases.txt")
-    flares = pd.read_csv("../results/hip67522_flares.csv")
+    tess_phases = np.loadtxt("data/tess_phases.txt")
+    cheops_phases = np.loadtxt("data/cheops_phases.txt")
+    flares = pd.read_csv("results/hip67522_flares.csv")
 
     # weigh by observing cadence
     weights = np.concatenate([np.ones_like(cheops_phases) * 10. / 60. / 60. / 24., 
@@ -158,4 +158,4 @@ if __name__ == "__main__":
 
 
 
-    plt.savefig("../plots/paper/polar.png", dpi=300, bbox_inches='tight')
+    plt.savefig("plots/paper/polar.png", dpi=300, bbox_inches='tight')

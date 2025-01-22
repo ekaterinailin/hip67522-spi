@@ -172,9 +172,6 @@ if __name__ == "__main__":
     # plot the circle
     ax.plot(x, y, z, color=colors[2], lw=.5, linestyle='dashed')
 
-    # for y>0 plot the circle with high zorder
-    # ax.plot(x[y>0], y[y>0], z[y>0], color=colors[2], lw=.5, linestyle='dashed', zorder=1000)
-
     # annotate the small circle with a line that goes to the small sphere and a text that says HIP 67522 b
     ax.text(9, -5.2, -.57, "HIP 67522 b", color=colors[5], fontsize=10)
 
@@ -200,4 +197,4 @@ if __name__ == "__main__":
     # make the background black
     ax.set_facecolor(colors[6])
 
-    plt.savefig(f'../plots/paper/dipole_field_lines_{suffix}.png', dpi=300, bbox_inches='tight')
+    plt.savefig(f'plots/paper/dipole_field_lines_{suffix}.png', dpi=300, bbox_inches='tight')
