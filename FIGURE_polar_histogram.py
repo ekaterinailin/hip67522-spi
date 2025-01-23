@@ -106,7 +106,13 @@ if __name__ == "__main__":
     # plot the expected flare rate
     x = np.linspace(-np.pi/2, np.pi/2, 100)
     # the exponent accounts for the flare rate being changed to the power of alpha - 1
-    y = np.cos(x)**0.8 * 1.2 
+
+    
+    powerexp = np.loadtxt("results/ffd_full_sample_alpha.txt").astype(float)
+    print(f"Power law exponent of full sample: {powerexp:.2f}")
+    y = np.cos(x)**(powerexp - 1) * 1.2 
+
+    
     ax.plot(x, y, color='orange', linewidth=2, linestyle='--', alpha=0.8)
     ax.fill_between(x, y, 0, color='orange', alpha=0.2)
 
