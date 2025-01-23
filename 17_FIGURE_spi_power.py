@@ -27,6 +27,7 @@ import astropy.units as u
 from astropy.constants import R_jup, R_sun, sigma_sb, L_sun
 
 
+
 def b_from_lx_reiners(lx, r, error=False, lx_err=None, r_err=None):
     """Reiners et al. 2022 Eq. 4 inverted to get magnetic field in Gauss.
     
@@ -429,8 +430,10 @@ if __name__ == "__main__":
     # threshold energy
     Emin = flares.mean_bol_energy.iloc[1] * u.erg
 
-    # flux in excess of lambda0
-    lambd = 0.5 / u.d
+    # flux in excess of lambda0 read from results/spirate.txt
+    lambd = np.loadtxt("results/spirate.txt") / u.day
+    print(f"Flare rate in excess of threshold: {lambd:.2f}")
+
 
     # power law exponent of FFD read from results/ffd_full_sample_alpha.txt
     alpha = np.loadtxt("results/ffd_full_sample_alpha.txt").astype(float)
@@ -545,6 +548,8 @@ if __name__ == "__main__":
     # calculate tot_flux closest to Emax
     spi_flux = tot_flux[np.argmin(np.abs(Emaxs-Emax.value))]
     print(f"SPI flux: {spi_flux:.2e} erg/s")
+
+    print(f"SPI flux in fractions of L_X: {spi_flux/lx:.2f}")
 
 
     # layout

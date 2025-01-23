@@ -47,4 +47,15 @@ if __name__ == "__main__":
         print(f"{colnames[col]}: {aics[col].mean():.3f} +/- {aics[col].std():.3f}")
 
     plt.savefig("plots/diagnostic/fit_parameter_histograms.png", dpi=300)
+
+    # save median lambda_1 - lambda_0 as spi flare rate to file
+    aics["spi"] = aics["l1"] - aics["l0mod"]
+    
+    print(f"SPI flare rate: {aics['spi'].mean():.3f} +/- {aics['spi'].std():.3f}")
+
+    meanspirate = aics['spi'].mean()
+
+    # save to file in results/spirate.txt
+    with open("results/spirate.txt", "w") as f:
+        f.write(str(meanspirate))
     

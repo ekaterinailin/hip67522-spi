@@ -63,8 +63,6 @@ if __name__ == "__main__":
     weights = np.concatenate([np.ones_like(cheops_phases) * 10. / 60. / 60. / 24., np.ones_like(tess_phases) * 2. / 60. / 24.] )
     obs_phases = np.concatenate([cheops_phases, tess_phases])
     
-    print(np.sum(weights))
-
     # FULL SAMPLE FFD
 
     ffd = FFD(flares)

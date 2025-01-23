@@ -1,3 +1,17 @@
+"""
+UTF-8, Python 3.11.7
+
+------------
+HIP 67522
+------------
+
+Ekaterina Ilin, 2025, MIT License, ilin@astron.nl
+
+
+Calculate energy limited mass loss assuming the impact from CMEs.
+Make a plot showing results for different opening angles and efficiency factors.
+"""
+
 import numpy as np
 import pandas as pd
 import astropy.units as u
@@ -52,8 +66,8 @@ if __name__ == "__main__":
 
     # planet parameters
     a = 11.7
-    Rstar = 1.39 * u.Rsun
-    planet_radius = 0.0668 * u.Rsun
+    Rstar = 1.39 * u.Rsun # rizzo+2020
+    planet_radius = 0.0668 * u.Rsun # rizzo+2020
 
     # Thao+2024 results
     planet_mass =  15 * u.Mearth # best fit from Thao+2024
@@ -67,8 +81,9 @@ if __name__ == "__main__":
     # threshold energy
     Emin = flares.mean_bol_energy.iloc[1] * u.erg
 
-    # planet-induced flare rate 0.5 per day on top of 0.1 per day
-    flare_rate = 0.5 / u.day
+    # flux in excess of lambda0 read from results/spirate.txt
+    flare_rate = np.loadtxt("results/spirate.txt") / u.day
+    print(f"Flare rate in excess of threshold: {flare_rate:.2f}")
 
     # power law exponent of FFD read from results/ffd_full_sample_alpha.txt
     alpha = np.loadtxt("results/ffd_full_sample_alpha.txt").astype(float)
