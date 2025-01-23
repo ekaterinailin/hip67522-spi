@@ -55,7 +55,7 @@ if __name__ == "__main__":
 
     # EXCLUDED FLARES -------------------
     df["~"] = " "
-    df.loc[df['log10_mean_bol_energy'] < 34, '~'] = r"excluded$^1$"
+    df.loc[df['log10_mean_bol_energy'] < 33.5, '~'] = r"excluded$^1$"
 
     # FORMAT STRINGS --------------------
     energy = df['log10_mean_bol_energy'].apply(lambda x: f"{x:.1f}")

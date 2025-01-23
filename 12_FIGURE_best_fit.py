@@ -127,7 +127,7 @@ if __name__ == "__main__":
 
     # add a cosine curve to show the phase of the planet
     x = np.linspace(-0.25, 0.25, 100)
-    y = np.cos(2 * np.pi * x)**0.8 * 0.6
+    y = np.cos(2 * np.pi * x)**0.6 * 0.6 # the exponent is to convert to flare rate
 
     ax.plot(x, y, c="k", zorder=-1, linestyle='-', lw=1.4, alpha=0.8)   
     ax.plot(x, y, c="orange", zorder=0, linestyle='-', lw=1.1, alpha=0.8)   

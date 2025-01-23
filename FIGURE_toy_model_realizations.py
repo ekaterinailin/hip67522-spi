@@ -238,6 +238,11 @@ if __name__ == "__main__":
 
   # PAPER FIGURE ------------------------------------------------
 
+  # power law exponent of FFD read from results/ffd_full_sample_alpha.txt
+  powerexp = np.loadtxt("results/ffd_full_sample_alpha.txt").astype(float)
+  print(f"Power law exponent of full sample: {powerexp:.2f}")
+  exp = powerexp - 1 # exponent for the flux to convert to flare rate
+
   # make a grid of obliquities and inital phases
   N1, N2 = 30, 30
 
@@ -270,12 +275,12 @@ if __name__ == "__main__":
           # if the maximum flux is in the first 20% of the orbit 
           # and the remaining flux is lower than 90% of the maximum flux
           # add the realization to the plot
-          if (maxphi > 0.0 and maxphi < .2) & (np.max(flux[:len(flux)//2 ]) <  0.9 * maxflux):
-              plt.fill_between(phi_off, 0, flux, color='steelblue', alpha=0.008, edgecolor = "k")
+          if (maxphi > 0.0 and maxphi < .2) & (np.max(flux[:len(flux)//2 ]) **exp <  0.9 * maxflux **exp):
+              plt.fill_between(phi_off, 0, flux**exp, color='steelblue', alpha=0.008, edgecolor = "k")
               offs.append(offset)
               amaxs.append(alphamax)
 
-              fluxs += flux
+              fluxs += flux**exp
 
   # shift flare phases and plot
   phases[phases>0.5] -= 1
@@ -283,8 +288,8 @@ if __name__ == "__main__":
       plt.axvline(phase, color='navy', linestyle='--', alpha=0.75)
 
   # plot the average flux
-  plt.plot(phi_off, fluxs/len(offs), c="k")
-  plt.ylim(0, 4)
+  plt.plot(phi_off, fluxs / len(offs), c="k")
+  plt.ylim(0, 3)
   plt.xlabel("Orbital phase of HIP 67522 b")
   plt.ylabel("Expected interaction flux (arb. u.)")
 

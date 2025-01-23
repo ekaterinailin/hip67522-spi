@@ -41,6 +41,8 @@ if __name__ == "__main__":
     print(f"Flare rate in cluster: {rate_in_cluster:.2f} flares/day")
     print(f"Flare rate outside cluster: {rate_out_cluster:.2f} flares/day")
 
+    print(f"Rate ratio: {rate_in_cluster / rate_out_cluster:.2f}")
+
     # expected flare number in cluster based on out-of-cluster rate
     expected_in_cluster = rate_out_cluster * np.sum(weights[phasemask])
 
