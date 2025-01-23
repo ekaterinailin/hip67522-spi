@@ -69,16 +69,16 @@ if __name__ == "__main__":
     
 
     # extend the flare region using tmin and tmax
-    extra_flag = (lc.time > tmin) & (lc.time < tmax)
+    extra_flag = (lc.time.values >= tmin) & (lc.time.values <= tmax)
     flag = np.zeros(len(lc))
     flag[extra_flag] = 1
 
     # -----------------------------------------------------------------------------------------
 
-    newmed = lc.flux[lc.flag==0].median()
-    f_flare = lc.flux[lc.flag==1].values - newmed
-    t_flare = lc.time[lc.flag==1].values
-    ferr_flare = np.std(lc.flux[lc.flag==0].values)
+    newmed = lc.flux[flag==0].median()
+    f_flare = lc.flux[flag==1].values - newmed
+    t_flare = lc.time[flag==1].values
+    ferr_flare = np.std(lc.flux[flag==0].values)
     print(f"Flare region flux std: {ferr_flare:.2e}")
 
 
