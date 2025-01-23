@@ -149,7 +149,7 @@ if __name__ == "__main__":
         elif tpeak < 4000.:
             sector = 64
 
-        lc = pd.read_csv(f"../data/tess/HIP67522_detrended_lc_{ind}_{sector}.csv")
+        lc = pd.read_csv(f"results/tess/HIP67522_detrended_lc_{ind}_{sector}.csv")
         ax2.scatter(lc.time, lc.flux, c="navy", s=0.2)
         ax.scatter(lc.time, lc.masked_raw_flux, c="steelblue", s=0.2) 
         ax.plot(lc.time, lc.model, c="orange", lw=0.5) 
@@ -162,6 +162,14 @@ if __name__ == "__main__":
 
             # highlight the transit region from edge to end
             ax.axvspan(lc.time[transit_edge], lc.time[transit_end], color="steelblue", alpha=0.3)
+
+        # highlight the flare mask
+        if (lc.flare_mask == 1).any():
+            flare_edge = np.where(lc.flare_mask == 1)[0][0]
+            flare_end = np.where(lc.flare_mask == 1)[0][-1]
+
+            # highlight the flare region from edge to end
+            ax.axvspan(lc.time[flare_edge], lc.time[flare_end], color="peru", alpha=0.3)
 
         for a in [ax,ax2]:
             a.set_xlim(lc.time.min(), lc.time.max())

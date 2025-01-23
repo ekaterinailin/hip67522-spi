@@ -381,7 +381,7 @@ if __name__ == '__main__':
 
 
         # sort all arrays by time
-        t, ff, newfitted, ferr, raw_f = [arr[np.argsort(t)] for arr in [t, ff, newfitted, ferr, raw_f]]
+        t, ff, newfitted, ferr, raw_f, flare_mask = [arr[np.argsort(t)] for arr in [t, ff, newfitted, ferr, raw_f, flare_mask]]
 
 
         # PLOT THE FINAL FLUX  ----------------------------------------------------------

@@ -170,7 +170,7 @@ if __name__ == "__main__":
 
       
         nwalkers = 32
-        nsteps = 4000
+        nsteps = 10000
 
         # define the initial position of the walkers
         pos = popt + 1e-4 * np.random.randn(nwalkers, ndim)
@@ -207,7 +207,7 @@ if __name__ == "__main__":
         # SHOW THE CORNER PLOT -----------------------------------------------------------
 
         # get the flat samples
-        flat_samples = sampler.get_chain(discard=1000, thin=15, flat=True)
+        flat_samples = sampler.get_chain(discard=5000, thin=15, flat=True)
 
         # plot the corner plot
         fig = corner.corner(flat_samples, labels=labels)
