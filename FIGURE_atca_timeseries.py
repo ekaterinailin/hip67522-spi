@@ -64,22 +64,23 @@ if __name__ == "__main__":
             c = colors.pop()
 
             g1 = g[g['source_J_val']]
-            ax.errorbar(g1[phase], g1['source_J'], yerr=g1['bkg_rms_J'], fmt='o', c=c, label=obsname)
+            ax.errorbar(g1[phase], g1['source_J']*1e3, yerr=g1['bkg_rms_J']*1e3, fmt='o', c=c, label=obsname)
             g2 = g[~g['source_J_val']]
-            ax.errorbar(g2[phase], g2['bkg_rms_J']*5, yerr=g2['bkg_rms_J'], fmt='.', color=c, uplims=True, alpha=0.3)
+            ax.errorbar(g2[phase], g2['bkg_rms_J']*5*1e3, yerr=g2['bkg_rms_J']*1e3, fmt='.', color=c, uplims=True, alpha=0.3)
 
         # plot the full integration fluxes
         f2 = full_integration_fluxes[~full_integration_fluxes['source_J_val']]
-        ax.errorbar(f2[phase], f2['bkg_rms_J']*5, yerr=f2['bkg_rms_J'], fmt='v', color="grey", markersize=10)
+        ax.errorbar(f2[phase], f2['bkg_rms_J']*5*1e3, yerr=f2['bkg_rms_J']*1e3, fmt='v', color="grey", markersize=10)
             
         ax.set_xlabel(version)
-        ax.set_ylabel('Flux Density [Jy]')
+        ax.set_ylabel('Flux density [mJy]')
         ax.set_xlim(0,1)
-        ax.set_ylim(0,1.6e-3)
+        ax.set_ylim(0,1.6)
         ax.axvline(0.25, color='black', linestyle='--', alpha=0.5)
         ax.axvline(0.75, color='black', linestyle='--', alpha=0.5)
-        if version == "Rotational phase of HIP 67522":
-            ax.legend(ncol=2, frameon=False, loc=2, fontsize=10)
+        if version == "Orbital phase of HIP 67522 b":
+            ax.legend(ncol=2, frameon=False, loc=2, fontsize=8.4)
+
 
 
     plt.tight_layout()
@@ -118,7 +119,7 @@ if __name__ == "__main__":
 
     # set y-labels for the left column
     for ax in axs[::2]:
-        ax.set_ylabel('Flux Density [Jy]')
+        ax.set_ylabel('Flux density [Jy]')
 
     plt.tight_layout()
 

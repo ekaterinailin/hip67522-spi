@@ -49,7 +49,7 @@ if __name__ == "__main__":
 
     alphas, alphaerrs, minfluxes, betas = [],[],[],[]
 
-    plt.figure(figsize=(5, 6))
+    plt.figure(figsize=(6, 4))
 
     colors = COLORS.copy() 
 
@@ -96,9 +96,10 @@ if __name__ == "__main__":
     plt.ylabel('Flux density [Jy]')
     plt.xlabel('Frequency [GHz]')
 
+
     # add a legend handel for the fit
     plt.plot([], [], c='gray', alpha=0.5, label=r'best fit to $S_\nu \propto \nu^\alpha$')
-    plt.legend(loc=(1.01, 0))
+    plt.legend(loc=(1.01, 0), fontsize=8.4)
 
     # save figure
     plt.tight_layout()
@@ -180,7 +181,7 @@ if __name__ == "__main__":
 
     # PLOT THE RESULTS ----------------------------------------------
 
-    plt.figure(figsize=(5.5, 4.5))
+    fig, ax = plt.subplots(figsize=(6, 4.5))
 
     freqs /= 1e9
 
@@ -205,9 +206,16 @@ if __name__ == "__main__":
 
     # layout
     plt.xlabel('Frequency [GHz]')
-    plt.ylabel('Flux density [Jy]')
+    plt.ylabel('Flux density [mJy]')
+
     # plt.xscale("log")
     plt.yscale("log")
+    plt.ylim(1e-4,1.4e-3)
+
+    # make the y-axis have 4 y tick labels
+    ax.yaxis.set_ticks([1e-4,0.2e-3, 0.5e-3, 1e-3, 1.4e-3])      
+    ax.yaxis.set_ticklabels([r"$0.1$",r"$0.2$", r"$0.5$", r"$1.0$",r"$1.4$"])  
+
     plt.tight_layout()
 
     # add more label to the y axis
