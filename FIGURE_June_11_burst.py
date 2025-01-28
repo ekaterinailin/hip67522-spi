@@ -55,15 +55,15 @@ if __name__ == "__main__":
 
     # rewrite as plt.errorbar with bkg_rms_J
     # plt.errorbar(df1["jd"], df1['source_J'], yerr=df1['bkg_rms_J'], xerr=thirty_min, fmt='x', label='1 h cadence', color='olive')
-    plt.errorbar(df30['jd'], df30['source_J'], yerr=df30['bkg_rms_J'], xerr=fifteen_min, fmt='o-', label='30 min cadence', color='blue')
+    plt.errorbar(df30['jd'], df30['source_J']*1e3, yerr=df30['bkg_rms_J']*1e3, xerr=fifteen_min, fmt='o-', label='30 min cadence', color='blue')
 
     plt.xlabel('Time [JD]')
-    plt.ylabel('Flux density [Jy]')
+    plt.ylabel('Flux density [mJy]')
     plt.xlim(df30['jd'].min() - fifteen_min, df30['jd'].max() + fifteen_min)
 
-    plt.legend(frameon=False, loc=2)   
+    # plt.legend(frameon=False, loc=2)   
 
-    plt.title('2024-06-11', fontsize=12)
+    # plt.title('2024-06-11', fontsize=12)
 
     plt.tight_layout()
 
