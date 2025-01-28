@@ -42,6 +42,8 @@ colors = [
 if __name__ == "__main__":
 
 
+    SN = 4
+
     # read HIP 67522 params 
     hip67522_params = pd.read_csv('../data/hip67522_params.csv')
     period = hip67522_params.loc[hip67522_params.param == "orbper_d","val"].values[0]
@@ -81,8 +83,8 @@ if __name__ == "__main__":
     # convert jd to phase for full_integration_fluxes
     full_integration_fluxes['phase'] = np.mod(full_integration_fluxes['jd'] - midpoint, period) / period
     full_integration_fluxes['rot_phase'] = np.mod(full_integration_fluxes['jd'] - midpoint, prot) / prot
-    full_integration_fluxes['source_J_val'] = ((full_integration_fluxes["source_J"] > (5 * full_integration_fluxes["bkg_rms_J"])) &
-                                            (full_integration_fluxes["source_J"] > (full_integration_fluxes["bkg_max_J"])) )
+    full_integration_fluxes['source_J_val'] = ((full_integration_fluxes["source_J"] > (SN * full_integration_fluxes["bkg_rms_J"])) &
+                                            (full_integration_fluxes["source_J"] > (full_integration_fluxes["bkg_max_J"])))
 
     # save the full_integration_fluxes to a csv file
     full_integration_fluxes.to_csv('../data/atca_full_integration_time_series.csv', index=False)
@@ -124,11 +126,14 @@ if __name__ == "__main__":
     df['jd'] = Time(df['datetime'], scale="utc").jd
 
     # if source_J is < than 5 * bkg_rms_J or below the max value in the background, set source_J_val to False
-    df['source_J_val'] = (df["source_J"] > (5 * df["bkg_rms_J"]))  &  (df["source_J"] > (df["bkg_max_J"])) 
+    df['source_J_val'] = (df["source_J"] > (SN * df["bkg_rms_J"])) 
 
     # convert JD to orbital phase
     df['phase'] = np.mod(df['jd'] - midpoint, period) / period
     df['rot_phase'] = np.mod(df['jd'] - midpoint, prot) / prot
+
+    # calculate duration of each observation
+    # df['duration'] = df['tstop'] - df['tstart']
 
     # save the 1hr_integration_fluxes to a csv file
     df.to_csv('../data/atca_all_timeseries.csv', index=False)

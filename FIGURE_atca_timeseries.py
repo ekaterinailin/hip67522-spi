@@ -66,11 +66,11 @@ if __name__ == "__main__":
             g1 = g[g['source_J_val']]
             ax.errorbar(g1[phase], g1['source_J'], yerr=g1['bkg_rms_J'], fmt='o', c=c, label=obsname)
             g2 = g[~g['source_J_val']]
-            ax.errorbar(g2[phase], g2['source_J'], yerr=g2['bkg_rms_J'], fmt='.', color=c, uplims=True, alpha=0.3)
+            ax.errorbar(g2[phase], g2['bkg_rms_J']*5, yerr=g2['bkg_rms_J'], fmt='.', color=c, uplims=True, alpha=0.3)
 
         # plot the full integration fluxes
         f2 = full_integration_fluxes[~full_integration_fluxes['source_J_val']]
-        ax.errorbar(f2[phase], f2['source_J'], yerr=f2['bkg_rms_J'], fmt='v', color="grey", markersize=10)
+        ax.errorbar(f2[phase], f2['bkg_rms_J']*5, yerr=f2['bkg_rms_J'], fmt='v', color="grey", markersize=10)
             
         ax.set_xlabel(version)
         ax.set_ylabel('Flux Density [Jy]')
@@ -106,7 +106,7 @@ if __name__ == "__main__":
         ax.errorbar(g1['jd'], g1['source_J'], yerr=g1['bkg_rms_J'], fmt='o', c="blue")
         
         g2 = group[~group["source_J_val"]]
-        ax.errorbar(g2['jd'], g2['source_J'], yerr=g2['bkg_rms_J'], fmt='o', color="grey", uplims=True)
+        ax.errorbar(g2['jd'], g2['bkg_rms_J']*5, yerr=g2['bkg_rms_J'], fmt='o', color="grey", uplims=True)
         
         ax.set_title(group["date"].iloc[0], fontsize=12)
 
