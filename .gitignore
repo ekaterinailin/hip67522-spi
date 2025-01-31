@@ -4,3 +4,4 @@ results/cheops/*
 results/tess/*
 data/cheops/*
 data/tess/*
+*.png

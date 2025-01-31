@@ -44,6 +44,7 @@ The analysis consists of three parts, summarized in three bash scripts (``PART1`
 Clone this repository with git
 
 ``git clone https://github.com/ekaterinailin/hip67522-spi.git``
+``git checkout flaring-spi``
 
 and install the dependencies found under ``requirements.txt``. All required Python packages can be installed with pip or conda (see their respective documentations). Installation time is oom minutes.
 
