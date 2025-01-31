@@ -1,6 +1,6 @@
 ## Close-in planet induces flares on its host star 
 
-The code in this repository reproduces all results in the manuscript of the same title. The light curve files from CHEOPS can be provided upon request, but will go public by the end of 2025, and can be accessed based on the observing log information (see _data/cheops/_). Reduced light curves will be made available on Zenodo at the time of publication.
+The code in this repository reproduces all results in the manuscript of the same title. The TESS light curves required for the analysis are publicly avaiable via the Mikulski Archive for Space Telescopes (MAST). The CHEOPS light curve files can be provided upon request. Raw CHEOPS light curves will go public by the end of 2025, and will be accessible via the CHEOPS Archive using on the observing log information (see _data/cheops/_). Reduced CHEOPS light curves will be made available on Zenodo at the time of publication, or upon request.
 
 ### Structure of this repository
 
@@ -45,7 +45,7 @@ Clone this repository with git
 
 ``git clone https://github.com/ekaterinailin/hip67522-spi.git``
 
-and install the dependencies found under requirements.txt. All required Python packages can be installed with pip or conda (see their respective documentations). Installation time is oom minutes.
+and install the dependencies found under ``requirements.txt``. All required Python packages can be installed with pip or conda (see their respective documentations). Installation time is oom minutes.
 
 ### Requirements
 
