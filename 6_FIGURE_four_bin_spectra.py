@@ -40,7 +40,7 @@ if __name__ == "__main__":
     N = 10
 
     # get the spectra, note that 1,2,3,4 is backwards in L band!
-    df = pd.read_csv('../data/Stokes_I_4bins.csv')
+    df = pd.read_csv('data/atca/Stokes_I_4bins.csv')
     df = df.sort_values(by='obsname')
 
     # weed out the non-detections, same criterion as for the rest of the paper
@@ -112,7 +112,7 @@ if __name__ == "__main__":
 
     # save figure
     plt.tight_layout()
-    plt.savefig('../plots/four_bin_spectra_individual_fits.png', dpi=300)
+    plt.savefig('plots/atca/four_bin_spectra_individual_fits.png', dpi=300)
 
     # ----------------------------------------------------------------
 
@@ -124,7 +124,7 @@ if __name__ == "__main__":
     plt.xlabel('Mean flux density [Jy]')
     plt.ylabel(r'Spectral index $\alpha$')
     plt.tight_layout()
-    plt.savefig('../plots/four_bin_spectra_individual_fits_alpha_vs_flux.png', dpi=300)
+    plt.savefig('plots/atca/four_bin_spectra_individual_fits_alpha_vs_flux.png', dpi=300)
 
 
     # NOW FIT ALL SPECTRA WITH DIFFERENT OFFSETS BUT THE SAME ALPHA
@@ -192,7 +192,7 @@ if __name__ == "__main__":
     print(fr"Mean power law offset in quiescence: ${mean_beta:.5f} \pm {std_beta:.5f}")
     
     # save the mean beta and std beta to file
-    with open('../results/spectral_offset.txt', 'w') as f:
+    with open('results/atca/spectral_offset.txt', 'w') as f:
         f.write(fr"{mean_beta},{std_beta}")
 
     # sanity check flux at 2.1 GHz
@@ -248,12 +248,12 @@ if __name__ == "__main__":
     plt.tight_layout()
 
     # save the figure
-    plt.savefig("../plots/paper/four_bin_spectra.png", dpi=300)
+    plt.savefig("plots/atca/four_bin_spectra.png", dpi=300)
 
     print(fr"Spectral index: ${popt[0]:.3f} \pm {np.diag(pcov)[0]:.3f}$")
 
     # save spectral index to file
-    with open('../results/spectral_index.txt', 'w') as f:
+    with open('results/atca/spectral_index.txt', 'w') as f:
         f.write(fr"{popt[0]},{np.diag(pcov)[0]}")
 
     # CONSISTENCY CHECK ----------------------------
@@ -272,7 +272,7 @@ if __name__ == "__main__":
     plt.xlabel('Frequency [GHz]')
     plt.ylabel('Flux density [Jy]')
     plt.legend(frameon=False)
-    plt.savefig('../plots/1424-418_spectral_index.png')
+    plt.savefig('plots/atca/1424-418_spectral_index.png')
 
     print(rf"Phase calibrator $\alpha$ measured on May 15, 2024: {popt[0]:.2f}")
     # https://www.narrabri.atnf.csiro.au/calibrators/calibrator_database_viewcal?source=1424-418

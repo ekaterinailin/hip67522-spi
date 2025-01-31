@@ -38,7 +38,7 @@ if __name__ == "__main__":
 
     # GET STELLAR PARAMETERS ----------------------------------------------------
 
-    hip67522_params = pd.read_csv('../data/hip67522_params.csv')
+    hip67522_params = pd.read_csv('data/hip67522_params.csv')
     radius_rsun = hip67522_params.iloc[4].val
     radius_rsun_err = hip67522_params.iloc[4].err
     d = 124.7 * u.pc
@@ -49,7 +49,7 @@ if __name__ == "__main__":
 
     # QUIESCENT LUMINOSITY ------------------------------------------------------
 
-    all = pd.read_csv('../data/atca_full_integration_time_series.csv')
+    all = pd.read_csv('data/atca/atca_full_integration_time_series.csv')
     all = all[all["source_J_val"]] # exclude non-detection
 
     d = 124.7 * u.pc
@@ -60,6 +60,7 @@ if __name__ == "__main__":
 
     # get the mean and std of the quiescent flux density
     mean_quiescent = all_except.source_J.mean()
+    max_quiescent = all_except.source_J.max()
 
     # use the average background rms because we are not measuring the same state independently
     std_quiescent = all_except.bkg_rms_J.mean() 
@@ -70,7 +71,7 @@ if __name__ == "__main__":
     l_mean_quiescent = (mean_quiescent * u.Jy * 4 * np.pi * d**2).to(u.erg / u.s / u.Hz)
     l_std_quiescent = (std_quiescent * u.Jy * 4 * np.pi * d**2).to(u.erg / u.s / u.Hz)
 
-    print(fr"Quiescent L band luminosity: {l_mean_quiescent:.3e} \pm {l_std_quiescent:.3e}")
+    print(fr"Quiescent L band luminosity: {l_mean_quiescent.value:.3e} \pm {l_std_quiescent:.3e}")
 
     # get the log10 of mean quiescent luminosity
     log10_l_mean_quiescent = np.log10(l_mean_quiescent.value)
@@ -86,14 +87,16 @@ if __name__ == "__main__":
 
     # BURST LUMINOSITIES ------------------------------------------------------
 
-    all = pd.read_csv("../data/all_timeseries.csv") 
+    all = pd.read_csv("data/atca/atca_all_timeseries.csv") 
+    all = all[all["source_J_val"]] # exclude non-detection
 
     # the two bursts
     burstname1 = 20240511
     burstname2 = 20240611
 
     # detection threshold for a burst
-    thresh = mean_quiescent + 3 * std_quiescent
+    thresh = max_quiescent + 5 * std_quiescent
+    print(f"Threshold for burst detection: {thresh*1e3:.3f} mJy")
 
     # is the May 11 burst above the threshold?
     n_above = np.where((all.loc[all["obsname"] == burstname1, "source_J"] > thresh).values)[0].shape[0]
@@ -105,8 +108,8 @@ if __name__ == "__main__":
     uncert_maxmay = all.loc[all["obsname"] == burstname1, "bkg_rms_J"].max()
     maxjune = all.loc[all["obsname"] == burstname2, "source_J"].max()
     uncert_maxjune = all.loc[all["obsname"] == burstname2, "bkg_rms_J"].max()
-    print(f"Max flux in May: {maxmay*1e3:.3f} \pm {uncert_maxmay:.4f} mJy")
-    print(f"Max flux in June: {maxjune*1e3:.3f} \pm {uncert_maxjune:.4f} mJy")
+    print(f"Max flux in May: {maxmay*1e3:.3f} \pm {uncert_maxmay*1e3:.4f} mJy")
+    print(f"Max flux in June: {maxjune*1e3:.3f} \pm {uncert_maxjune*1e3:.4f} mJy")
 
     # convert maxmay and maxjune to erg/s/Hz
     l_maxmay = (maxmay * u.Jy * 4 * np.pi * d**2).to(u.erg / u.s / u.Hz)

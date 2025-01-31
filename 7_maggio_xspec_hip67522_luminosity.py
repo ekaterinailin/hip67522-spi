@@ -1,3 +1,18 @@
+"""
+UTF-8, Python 3
+
+------------
+HIP 67522
+------------
+
+Ekaterina Ilin, 2025, MIT License, ilin@astron.nl
+
+
+This script calculates the radio luminosity of HIP 67522 based on
+the X-ray observations in Maggio+2024, using their 3T model
+and XSPEC to convert to luminosity in 0.2-2 keV band.
+"""
+
 import xspec
 import numpy as np
 import astropy.units as u
@@ -23,7 +38,7 @@ if __name__ == "__main__":
     # get flux in 0.2-2 keV band
     xspec.AllModels.calcFlux("0.2,2.0,0")
 
-    # calculate luminosity in that band
+    # calculate luminosity in that band using the flux result 3.117e-12
     lum = ((3.1117e-12 * 4 * np.pi * 124.7**2) * u.erg / u.cm**2 / u.s * u.pc**2).to("erg/s")
 
     print(lum)

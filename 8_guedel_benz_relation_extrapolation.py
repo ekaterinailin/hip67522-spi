@@ -68,8 +68,8 @@ if __name__ == "__main__":
     print(f"log10 L_R @ 5-8 GHz based on X-ray luminosity = {logr:.2f}")
 
     # spectral properties from results/spectral_index.txt and results/spectral_offset.txt
-    alpha, alphaerr = np.loadtxt("../results/spectral_index.txt", dtype=float, delimiter=",")
-    beta, betaerr = np.loadtxt("../results/spectral_offset.txt", dtype=float, delimiter=",")
+    alpha, alphaerr = np.loadtxt("results/atca/spectral_index.txt", dtype=float, delimiter=",")
+    beta, betaerr = np.loadtxt("results/atca/spectral_offset.txt", dtype=float, delimiter=",")
 
     # distance of the source
     d = 124.7 * u.pc

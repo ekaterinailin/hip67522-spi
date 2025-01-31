@@ -40,8 +40,8 @@ colors = [
 if __name__ == "__main__":
 
     # read in both data sets
-    df = pd.read_csv('../data/atca_all_timeseries.csv')
-    full_integration_fluxes = pd.read_csv('../data/atca_full_integration_time_series.csv')
+    df = pd.read_csv('data/atca/atca_all_timeseries.csv')
+    full_integration_fluxes = pd.read_csv('data/atca/atca_full_integration_time_series.csv')
 
     # PLOT THE FLUX DENSITY VS ORBITAL AND ROTATIONAL PHASE --------------------------------------------
 
@@ -86,7 +86,7 @@ if __name__ == "__main__":
     plt.tight_layout()
     plt.xlim(0.,1)
 
-    plt.savefig(f'../plots/paper/phase_flux_density.png', dpi=300)
+    plt.savefig(f'plots/atca/phase_flux_density.png', dpi=300)
 
     # ---------------------------------------------------------------------------------------------------
     
@@ -127,6 +127,6 @@ if __name__ == "__main__":
     plt.subplots_adjust(hspace=0.25)
     plt.subplots_adjust(wspace=0.06)
 
-    plt.savefig(f'../plots/paper/orbital_phase_flux_density_grid.png', dpi=300)
+    plt.savefig(f'plots/atca/orbital_phase_flux_density_grid.png', dpi=300)
 
     # ---------------------------------------------------------------------------------------------------
