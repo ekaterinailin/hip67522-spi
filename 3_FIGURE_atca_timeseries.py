@@ -6,7 +6,7 @@ UTF-8, Python 3
 HIP 67522
 ------------
 
-Ekaterina Ilin, 2024, MIT License, ilin@astron.nl
+Ekaterina Ilin, 2025, MIT License, ilin@astron.nl
 
 Read atca time series and plot the flux density vs orbital and rotational phase,
 as well as into a grid of subplots for each observing run.

@@ -6,7 +6,7 @@ UTF-8, Python 3
 HIP 67522
 ------------
 
-Ekaterina Ilin, 2024, MIT License, ilin@astron.nl
+Ekaterina Ilin, 2025, MIT License, ilin@astron.nl
 
 Gather and tidy the ATCA results for HIP 67522, put them in two files:
 - atca_full_integration_time_series.csv
