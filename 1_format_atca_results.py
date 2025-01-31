@@ -90,67 +90,60 @@ if __name__ == "__main__":
 
     # read in the 1hr integration fluxes ---------------------------------------------
     
+    # COPYING FROM LOCAL [BACKUP] -------------
+    # # search /home/ilin/Documents/2024_04_HIP67522_ATCA/results for all timeseries.csv files, including subdirectories for lcs
+    # files = glob.glob('/home/ilin/Documents/2024_04_HIP67522_ATCA/results/**/timeseries/timeseries.csv', recursive=True)
 
-    # search /home/ilin/Documents/2024_04_HIP67522_ATCA/results for all timeseries.csv files, including subdirectories for lcs
-    files = glob.glob('/home/ilin/Documents/2024_04_HIP67522_ATCA/results/**/timeseries/timeseries.csv', recursive=True)
+    # # if data/atca/timeseries does not exist, create it
+    # try:
+    #     os.makedirs('data/atca/timeseries')
+    # except FileExistsError:
+    #     pass
 
-    # if data/atca/timeseries does not exist, create it
-    try:
-        os.makedirs('data/atca/timeseries')
-    except FileExistsError:
-        pass
+    # # copy all file to data/atca adding the obsname to the filename as suffix
+    # newfiles = []
+    # for file in files:
+    #     obsname = file.split('/')[-3]
+    #     new_file = f'data/atca/timeseries/atca_{obsname}_timeseries.csv'
+    #     newfiles.append(new_file)
+    #     shutil.copyfile(file, new_file)
 
-    # copy all file to data/atca adding the obsname to the filename as suffix
-    newfiles = []
-    for file in files:
-        obsname = file.split('/')[-3]
-        new_file = f'data/atca/timeseries/atca_{obsname}_timeseries.csv'
-        newfiles.append(new_file)
-        shutil.copyfile(file, new_file)
+    # # do the same for the tstart.txt files
+    # start_files = glob.glob('/home/ilin/Documents/2024_04_HIP67522_ATCA/results/**/timeseries/tstart.txt', recursive=True)
 
-    # do the same for the tstart.txt files
-    start_files = glob.glob('/home/ilin/Documents/2024_04_HIP67522_ATCA/results/**/timeseries/tstart.txt', recursive=True)
+    # # copy all file to data/atca/timeseries adding the obsname to the filename as suffix
+    # newfiles_tstart = []
+    # for file in start_files:
+    #     obsname = file.split('/')[-3]
+    #     new_file = f'data/atca/timeseries/atca_{obsname}_tstart.txt'
+    #     newfiles_tstart.append(new_file)
+    #     shutil.copyfile(file, new_file)
+    # ----------------------------
 
-    # copy all file to data/atca/timeseries adding the obsname to the filename as suffix
-    newfiles_tstart = []
-    for file in start_files:
-        obsname = file.split('/')[-3]
-        new_file = f'data/atca/timeseries/atca_{obsname}_tstart.txt'
-        newfiles_tstart.append(new_file)
-        shutil.copyfile(file, new_file)
+    # find all files in data/atca/timeseries that have _timeseries.csv in the name
+    newfiles = glob.glob('data/atca/timeseries/*_timeseries.csv')
+
+    # find all files in data/atca/timeseries that have _tstart.txt in the name
+    newfiles_tstart = glob.glob('data/atca/timeseries/*_tstart.txt')
 
     
     # write all files to a single dataframe
-    df = pd.concat([pd.read_csv(f) for f in newfiles], ignore_index=True)
-
-    # add the obsname to the dataframe using the newfiles list
-    obsnames = [f.split('/')[-1].split('_')[1] for f in newfiles]
-    df['obsname'] = obsnames
+    dfs = []
+    for f in newfiles:
+        df = pd.read_csv(f)
+        df["obsname"] = f.split('/')[-1].split('_')[1]
+        dfs.append(df)
+    df = pd.concat(dfs, ignore_index=True)
 
     # add tstart to the dataframe using the newfiles_tstart list
     tstarts = {}
     for f in newfiles_tstart:
-        obsname = f.split('/')[-1].split('_')[0]
+        obsname = f.split('/')[-1].split('_')[1]
         with open(f, 'r') as file:
             tstart = file.read().strip()
             tstarts[obsname] = tstart
 
     df['tstart'] = df['obsname'].map(tstarts)
-
-    # search the same folder for all instances of start.txt
-    # start_files = glob.glob('/home/ilin/Documents/2024_04_HIP67522_ATCA/results/**/timeseries/tstart.txt', recursive=True)
-
-    # for each tstart.txt file read in the start time and the obsname from the file path and put them in a dictionary
-    # obs_dict = {}
-    # for file in start_files:
-    #     with open(file, 'r') as f:
-    #         obsname = file.split('/')[-3]
-    #         start = f.read().strip()
-    #         obs_dict[int(obsname)] = start
-
-
-    # add the start time to the dataframe
-    # df['tstart'] = df['obsname'].map(obs_dict)
 
     # convert obsname and num to date and time column
     df['date'] = pd.to_datetime(df['obsname'], format='%Y%m%d')
@@ -169,6 +162,8 @@ if __name__ == "__main__":
 
     # convert JD to orbital phase
     df['phase'] = np.mod(df['jd'] - midpoint, period) / period
+
+    print(df.head(25))
 
     # save the 1hr_integration_fluxes to a csv file
     df.to_csv('data/atca/atca_all_timeseries.csv', index=False)

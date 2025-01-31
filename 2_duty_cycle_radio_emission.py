@@ -16,7 +16,7 @@ import pandas as pd
 
 if __name__ == "__main__":
 
-    df = pd.read_csv('../data/atca_all_timeseries.csv')
+    df = pd.read_csv('data/atca/atca_all_timeseries.csv')
     min_detected = df.loc[df["source_J_val"]==True, "source_J"].min()
     min_detected_err_loc = df.loc[df["source_J_val"]==True, "source_J" ].argmin()
     min_detected_err = df.loc[min_detected_err_loc, "bkg_rms_J"]
