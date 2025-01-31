@@ -28,7 +28,16 @@ plt.rcParams.update({'font.size': 12})
 def spectrum(nu, alpha, offset):
     return np.log10(nu) * alpha + offset
 
+def spectrum_err(nu, alpha, offset, errvals):
+    alphaerr, offseterr = errvals
+    val = np.log10(nu) * alpha + offset
+    valerr = np.sqrt(np.log10(nu)**2 * alphaerr**2 + offseterr**2)
+    return valerr
+
+
 if __name__ == "__main__":
+
+    N = 10
 
     # get the spectra, note that 1,2,3,4 is backwards in L band!
     df = pd.read_csv('../data/Stokes_I_4bins.csv')
@@ -36,7 +45,7 @@ if __name__ == "__main__":
 
     # weed out the non-detections, same criterion as for the rest of the paper
     for i in range(1,5):
-        mask = (df[f"source_J_{i}"] < 5 * df[f"bkg_rms_J_{i}"]) | (df[f"source_J_{i}"] < df[f"bkg_max_J_{i}"]).values
+        mask = (df[f"source_J_{i}"] < 4 * df[f"bkg_rms_J_{i}"]) | (df[f"source_J_{i}"] < df[f"bkg_max_J_{i}"])
         df[f"source_J_{i}"][mask] = np.nan
         df[f"bkg_rms_J_{i}"][mask] = np.nan
 
@@ -134,6 +143,7 @@ if __name__ == "__main__":
 
     # get the error in log space
     log_err = np.log10(sel + error) - np.log10(sel)
+    # log_err = np.log10(sel) - np.log10(sel - error)
 
     # prepare the initial guess for the offsets and alpha
     offset = np.full_like(betas, np.median(betas))
@@ -142,7 +152,7 @@ if __name__ == "__main__":
     # define the fit function with the mask included
     def full_spec(logfreqs, alpha, o1, o2, o3, o4, o5, o6, o7, o8, o9, o10):
 
-        logfreqs = np.tile(logfreqs, 10)
+        logfreqs = np.tile(logfreqs, N)
         offset = np.repeat([o1,o2,o3,o4,o5,o6,o7,o8,o9,o10], 4)
 
         logfreqs = logfreqs[~mask.flatten()]
@@ -162,7 +172,7 @@ if __name__ == "__main__":
     masked_vals = full_spec(logfreqs, *popt)
 
     # fill a 10,4 shape with nans
-    vals = np.full((10,4), np.nan)
+    vals = np.full((N,4), np.nan)
 
     # fill in vals into masked range
     vals[~mask] = masked_vals
@@ -172,12 +182,31 @@ if __name__ == "__main__":
 
     # sort betas by value
     betas = popt[1:]
-    sort_betas = np.sort(betas)[:-2] # drop the two highest values
+    sort_betas = np.sort(betas)[:-2] # drop the two highest values that correspond to the bursts
     
     mean_beta = np.mean(sort_betas)
     std_beta = np.std(sort_betas)
 
+    std_beta = np.diag(pcov)[1:-2].mean()
+
     print(fr"Mean power law offset in quiescence: ${mean_beta:.5f} \pm {std_beta:.5f}")
+    
+    # save the mean beta and std beta to file
+    with open('../results/spectral_offset.txt', 'w') as f:
+        f.write(fr"{mean_beta},{std_beta}")
+
+    # sanity check flux at 2.1 GHz
+    specval = spectrum(2.1e9, popt[0], mean_beta)
+    print(f"Flux at 2.1 GHz: {10**specval:.2e} Jy")
+
+    # sanity check uncertainty on flux at 2.1 GHz
+    specerr = spectrum_err(2.1e9, popt[0], mean_beta, errvals=[np.diag(pcov)[0], std_beta])
+    
+    print(f"Upper uncertainty on flux at 2.1 GHz: {10**(specval + specerr) - 10**(specval):.2e} Jy")
+    print(f"Lower uncertainty on flux at 2.1 GHz: {10**(specval) - 10**(specval - specerr):.2e} Jy")
+
+
+
 
     # PLOT THE RESULTS ----------------------------------------------
 
@@ -187,7 +216,7 @@ if __name__ == "__main__":
 
     # loop through the rows in vals
     color = COLORS.copy()
-    for val in vals.reshape(10,4):
+    for val in vals.reshape(N,4):
         m = np.isnan(val)
         plt.plot(freqs[~m], 10**val[~m], c=color.pop(),zorder=-20)
 
@@ -218,13 +247,14 @@ if __name__ == "__main__":
 
     plt.tight_layout()
 
-    # add more label to the y axis
-
-
     # save the figure
     plt.savefig("../plots/paper/four_bin_spectra.png", dpi=300)
 
     print(fr"Spectral index: ${popt[0]:.3f} \pm {np.diag(pcov)[0]:.3f}$")
+
+    # save spectral index to file
+    with open('../results/spectral_index.txt', 'w') as f:
+        f.write(fr"{popt[0]},{np.diag(pcov)[0]}")
 
     # CONSISTENCY CHECK ----------------------------
 

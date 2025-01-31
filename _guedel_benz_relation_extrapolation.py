@@ -52,7 +52,7 @@ def spectrum(nu, alpha, beta, err=False, errvals=None):
         Flux density in Jy.
     """
     val = alpha * np.log10(nu) + beta
-    
+
     if err:
         alphaerr, betaerr = errvals 
         valerr = np.sqrt(np.log10(nu)**2 * alphaerr**2 + betaerr**2)
@@ -65,13 +65,15 @@ if __name__ == "__main__":
     loglx = 30.76 # 0.2-2 keV from Xpsec conversion
     logr = lr_gbr(loglx)
 
-    print(f"log 10 L_R @ 5-8 GHz = {logr:.2f}")
+    print(f"log10 L_R @ 5-8 GHz based on X-ray luminosity = {logr:.2f}")
 
-    # spectral properties
-    alpha, beta = (1.005, -12.93698) # from ATCA spectra
+    # spectral properties from results/spectral_index.txt and results/spectral_offset.txt
+    alpha, alphaerr = np.loadtxt("../results/spectral_index.txt", dtype=float, delimiter=",")
+    beta, betaerr = np.loadtxt("../results/spectral_offset.txt", dtype=float, delimiter=",")
 
     # distance of the source
     d = 124.7 * u.pc
+    derr = 0.3 * u.pc # distance error
 
     # flux at 6.75 GHz extrapolated from ATCA spectra
     val = spectrum(6.75e9, alpha, beta)
@@ -80,14 +82,11 @@ if __name__ == "__main__":
     l65ghz = ((10**val * u.Jy * 4 * np.pi * d**2)).to(u.erg / u.s / u.Hz)
     log10l65ghz = np.log10(l65ghz.value)
 
-    print(f"log10 L_R @ 6.75 GHz= {log10l65ghz:.2f} erg/s/Hz")
-
     # convert to surface brightness
-    ofs = np.log10(u.Jy.to("erg/s/pc^2/Hz") )
+    ofs = np.log10(u.Jy.to("erg * s^-1 * pc^-2 * Hz^-1") )
 
-    val, valerr = spectrum(6.75e9, alpha, beta, err=True, errvals = [0.005, 0.06554])
+    val, valerr = spectrum(6.75e9, alpha, beta, err=True, errvals = [alphaerr, betaerr])
     log10l65ghz = val + ofs + np.log10(4 * np.pi) + 2 * np.log10(d.value)
-    derr = 0.3 # distance error
-    err = np.sqrt(valerr**2 + (2 / np.log(10) / d.value * derr)**2)
+    err = np.sqrt(valerr**2 + (2 / np.log(10) / d.value * derr.value)**2)
     
-    print(f"log10 L_R @ 6.75 GHz= {log10l65ghz:.2f} +/- {err:.2f} erg/s/Hz")
+    print(f"log10 L_R @ 6.75 GHz based on extrapolation = {log10l65ghz:.2f} +/- {err:.2f} erg/s/Hz")
