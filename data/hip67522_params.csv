@@ -1,0 +1,6 @@
+param,val,err,source
+orbper_d,6.9594738,0.000006,barber2024tess
+rotper_d,1.418,0.016,rizzuto2020tess
+midpoint_BJD,2458826.72742,0.00028,rizzuto2020tess
+teff_K,5650,75,rizzuto2020tess
+radius_rsun,1.39,0.06,rizzuto2020tess

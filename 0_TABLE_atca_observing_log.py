@@ -15,7 +15,7 @@ import pandas as pd
 
 if __name__ == "__main__":
 
-    df = pd.read_csv("../data/hip67522_atca_obs_summary.csv")
+    df = pd.read_csv("data/atca/hip67522_atca_obs_summary.csv")
 
     total_obs_dur = (df["nrows"] / 90.  / 60.).sum().round(1)
     df["Duration"] = (df["nrows"] / 90.  / 60.).round(1).apply(lambda x: f"{x:.1f}")
@@ -41,7 +41,7 @@ if __name__ == "__main__":
     df["tstop"] = df["tstop"].dt.strftime("%H:%M")
 
 
-    configs = pd.read_csv("../data/atca_array_configs.csv")
+    configs = pd.read_csv("data/atca/atca_array_configs.csv")
 
     configs["date"] = pd.to_datetime(configs["date"], format="%d/%m/%Y")
 
@@ -80,7 +80,7 @@ if __name__ == "__main__":
     
 
     # write to file
-    with open("../tables/atca_observing_log.tex", "w") as f:
+    with open("tables/atca_observing_log.tex", "w") as f:
         f.write(string)
         
     print(string)
