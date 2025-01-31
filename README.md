@@ -39,9 +39,15 @@ The analysis consists of three parts, summarized in three bash scripts (``PART1`
 - Scripts with additional functionalities and checks are prefixed with ``x_``, including the script that runs the CHEOPS reduction pipeline.
 - To run the statistics and energetic only, the flare tables are provided under _results/_.
 
-### Requirements
+### Installation
 
-Software package requirements can be found under requirements.txt. All required Python packages can be installed with pip or conda (see their respective documentations). Installation time oom minutes.
+Clone this repository with git
+
+``git clone https://github.com/ekaterinailin/hip67522-spi.git``
+
+and install the dependencies found under requirements.txt. All required Python packages can be installed with pip or conda (see their respective documentations). Installation time is oom minutes.
+
+### Requirements
 
 All scripts except script 11 were run on 
 
