@@ -50,6 +50,11 @@ if __name__ == "__main__":
     # QUIESCENT LUMINOSITY ------------------------------------------------------
 
     all = pd.read_csv('data/atca/atca_full_integration_time_series.csv')
+
+    nondetections = all[~all["source_J_val"]]
+    upperlimits = nondetections["bkg_rms_J"].values * 4 * 1e3
+    print(f"Upper limits: {upperlimits}")
+
     all = all[all["source_J_val"]] # exclude non-detection
 
     d = 124.7 * u.pc
@@ -61,6 +66,10 @@ if __name__ == "__main__":
     # get the mean and std of the quiescent flux density
     mean_quiescent = all_except.source_J.mean()
     max_quiescent = all_except.source_J.max()
+    min_quiescent = all_except.source_J.min()
+
+    print(fr"Miminum Quiescent L band flux: {min_quiescent*1e3:.3f} mJy")
+    print(fr"Maximum Quiescent L band flux: {max_quiescent*1e3:.3f} mJy")
 
     # use the average background rms because we are not measuring the same state independently
     std_quiescent = all_except.bkg_rms_J.mean() 

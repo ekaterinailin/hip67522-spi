@@ -85,6 +85,8 @@ if __name__ == "__main__":
     full_integration_fluxes['source_J_val'] = ((full_integration_fluxes["source_J"] > (SN * full_integration_fluxes["bkg_rms_J"])) &
                                             (full_integration_fluxes["source_J"] > (full_integration_fluxes["bkg_max_J"])))
 
+    print(full_integration_fluxes.head(5))
+
     # save the full_integration_fluxes to a csv file
     full_integration_fluxes.to_csv('data/atca/atca_full_integration_time_series.csv', index=False)
 
@@ -163,7 +165,7 @@ if __name__ == "__main__":
     # convert JD to orbital phase
     df['phase'] = np.mod(df['jd'] - midpoint, period) / period
 
-    print(df.head(25))
+    print(df.head(5))
 
     # save the 1hr_integration_fluxes to a csv file
     df.to_csv('data/atca/atca_all_timeseries.csv', index=False)

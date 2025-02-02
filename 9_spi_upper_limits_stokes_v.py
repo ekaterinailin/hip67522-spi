@@ -49,6 +49,8 @@ def flux(power, efficiency =1, omega=0.1, d=124.7*u.pc, B=2100*u.G, frac_at_pole
 
 if __name__ == "__main__":  
 
+    SN = 4
+
     # read in the ATCA data in Stokes I
     df = pd.read_csv('../data/atca_full_integration_time_series.csv')
 
@@ -108,7 +110,7 @@ if __name__ == "__main__":
 
     # FLUX UPPER LIMIT CALCULATION -------------------------------------------------
 
-    merged["upperlimit_burst_mJy"] = merged.bkg_rms_J_stokesV * 4 / dur_burst * merged.duration * 1e3
+    merged["upperlimit_burst_mJy"] = merged.bkg_rms_J_stokesV * SN / dur_burst * merged.duration * 1e3
 
     upperlimit = np.mean(merged["upperlimit_burst_mJy"])
 
@@ -133,7 +135,7 @@ if __name__ == "__main__":
     # plt.yscale('log')
     # plt.axhline(upperlim_mJ)
 
-    power_at_upperlim = powers[np.argmin(np.abs(fluxes-upperlimit))]
+    power_at_upperlim = powers[np.argmin(np.abs(fluxes - upperlimit))]
 
     fraction_of_predicted_power = power_at_upperlim / (6.3e25 * u.erg / u.s) # from Ilin+2024
 
