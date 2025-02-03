@@ -25,6 +25,10 @@ from funcs.helper import COLORS
 # make font size bigger
 plt.rcParams.update({'font.size': 12})
 
+# turn off warnings
+import warnings
+
+
 def spectrum(nu, alpha, offset):
     return np.log10(nu) * alpha + offset
 
@@ -36,6 +40,8 @@ def spectrum_err(nu, alpha, offset, errvals):
 
 
 if __name__ == "__main__":
+
+    warnings.filterwarnings("ignore")
 
     N = 10
 

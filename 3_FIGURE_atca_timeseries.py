@@ -20,6 +20,9 @@ The file names of the resulting plots are:
 import pandas as pd
 import matplotlib.pyplot as plt
 
+# turn off warnings
+import warnings
+
 
 # set default font size in matplotlib
 plt.rcParams.update({'font.size': 12})
@@ -38,6 +41,8 @@ colors = [
         ]*2
 
 if __name__ == "__main__":
+
+    warnings.filterwarnings("ignore")
 
     # read in both data sets
     df = pd.read_csv('data/atca/atca_all_timeseries.csv')

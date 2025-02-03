@@ -16,6 +16,8 @@ the X-ray luminosity and the radio spectrum.
 import numpy as np
 import astropy.units as u
 
+# turn off warnings
+import warnings
 
 
 def lr_gbr(loglx):
@@ -62,6 +64,8 @@ def spectrum(nu, alpha, beta, err=False, errvals=None):
     
 if __name__ == "__main__":
 
+    warnings.filterwarnings("ignore")
+
     loglx = 30.76 # 0.2-2 keV from Xpsec conversion
     logr = lr_gbr(loglx)
 
@@ -90,3 +94,9 @@ if __name__ == "__main__":
     err = np.sqrt(valerr**2 + (2 / np.log(10) / d.value * derr.value)**2)
     
     print(f"log10 L_R @ 6.75 GHz based on extrapolation = {log10l65ghz:.2f} +/- {err:.2f} erg/s/Hz")
+
+    # FLARE RATE ESTIMATE ------------------------------------------------------
+
+    a_burst_per_time = 2/(134.7/24)
+
+    print(f"Burst rate: {a_burst_per_time:.2f} per day")

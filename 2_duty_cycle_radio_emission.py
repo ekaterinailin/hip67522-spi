@@ -15,7 +15,13 @@ This script reads the ATCA data and calculates the duty cycle of the detection.
 import pandas as pd
 import numpy as np
 
+# turn off warnings
+import warnings
+
+
 if __name__ == "__main__":
+
+    warnings.filterwarnings("ignore")
 
     SN = 4
 

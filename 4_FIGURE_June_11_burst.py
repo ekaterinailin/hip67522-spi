@@ -16,10 +16,16 @@ import numpy as np
 import matplotlib.pyplot as plt
 import astropy.units as u
 
+# turn off warnings
+import warnings
+
+
 # set default matplotlib fontsize to 13
 plt.rcParams.update({'font.size': 12})
 
 if __name__ == "__main__":
+
+    warnings.filterwarnings("ignore")
 
     # Compile from CASA results
 

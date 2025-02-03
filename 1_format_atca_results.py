@@ -25,6 +25,10 @@ import matplotlib.pyplot as plt
 
 from astropy.time import Time
 
+# turn off warnings
+import warnings
+
+
 # set default font size in matplotlib
 plt.rcParams.update({'font.size': 12})
 
@@ -42,6 +46,8 @@ colors = [
         ]*2
 
 if __name__ == "__main__":
+
+    warnings.filterwarnings("ignore")
 
     # threshold signal-to-noise ratio
     SN = 4
@@ -85,7 +91,9 @@ if __name__ == "__main__":
     full_integration_fluxes['source_J_val'] = ((full_integration_fluxes["source_J"] > (SN * full_integration_fluxes["bkg_rms_J"])) &
                                             (full_integration_fluxes["source_J"] > (full_integration_fluxes["bkg_max_J"])))
 
-    print(full_integration_fluxes.head(5))
+    # add non-detection for 2024-05-31 manually
+    date = pd.to_datetime("2024-05-31 10:59:39")    
+    full_integration_fluxes.loc[full_integration_fluxes.datetime == date, 'source_J_val'] = False
 
     # save the full_integration_fluxes to a csv file
     full_integration_fluxes.to_csv('data/atca/atca_full_integration_time_series.csv', index=False)

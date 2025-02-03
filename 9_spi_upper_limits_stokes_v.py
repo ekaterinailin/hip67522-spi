@@ -18,7 +18,6 @@ Read ATCA Stokes V data, and calculate
 
 import pandas as pd 
 import numpy as np
-import matplotlib.pyplot as plt
 import astropy.units as u
 from astropy.time import Time
 
@@ -45,6 +44,9 @@ def flux(power, efficiency =1, omega=0.1, d=124.7*u.pc, B=2100*u.G, frac_at_pole
     fluxinband = flux_per_Hz.value * 1e23 * efficiency * 1e3 # in mJy with some efficiency 
     return fluxinband
 
+# turn off warnings
+import warnings
+warnings.filterwarnings("ignore")
 
 
 if __name__ == "__main__":  

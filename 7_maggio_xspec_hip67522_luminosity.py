@@ -17,6 +17,10 @@ import xspec
 import numpy as np
 import astropy.units as u
 
+# turn off warnings
+import warnings
+warnings.filterwarnings("ignore")
+
 if __name__ == "__main__":
 
     xspec.Model("vapec+vapec+vapec")
