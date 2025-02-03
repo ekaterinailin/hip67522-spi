@@ -173,8 +173,6 @@ if __name__ == "__main__":
     # convert JD to orbital phase
     df['phase'] = np.mod(df['jd'] - midpoint, period) / period
 
-    print(df.head(5))
-
     # save the 1hr_integration_fluxes to a csv file
     df.to_csv('data/atca/atca_all_timeseries.csv', index=False)
 

@@ -6,8 +6,8 @@ The code in this repository reproduces all figures and results in the manuscript
 
 The scripts in each part are enumerated in the order in which they should be executed to self-consistently reproduce all figures. Scripts with additional functionalities and checks are prefixed with ``x_``. The numbered scripts are
 
-0. Make a table for the ATCA observing log.
-1. Format flux values extracted from images in CASA into digestible csv files.
+0. Format flux values extracted from images in CASA into digestible csv files.
+1. Make a table for the ATCA observing log.
 2. Calculate the duty cycle of HIP 67522 radio emission.
 3. Make a large figure showing all L band light curves.
 4. Make an extra figure showing the June 11, 2024 burst, at 30-min cadence.
