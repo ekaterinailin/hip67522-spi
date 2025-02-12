@@ -17,6 +17,8 @@ import numpy as np
 import astropy.units as u
 from astropy.constants import k_B, c, R_sun
 
+
+
 def brightness_temperature(value, std, radius_rsun, radius_rsun_err, d, d_err):
 
     Sv = value * u.Jy * d**2 / (radius_rsun**2 * R_sun**2)
@@ -34,7 +36,13 @@ def brightness_temperature(value, std, radius_rsun, radius_rsun_err, d, d_err):
 
     return Tb.value, Tb_err.value
 
+# turn off warnings
+import warnings
+
+
 if __name__ == "__main__":
+
+    warnings.filterwarnings("ignore")
 
     # GET STELLAR PARAMETERS ----------------------------------------------------
 

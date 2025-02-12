@@ -131,6 +131,8 @@ if __name__ == "__main__":
     # calculate fluxes
     fluxes = np.array([flux(power, omega=omega) for power in powers])
 
+    
+
     # plot
     # plt.plot(powers,fluxes)
     # plt.xscale('log')
