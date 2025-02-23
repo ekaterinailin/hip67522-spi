@@ -25,6 +25,8 @@ The analysis consists of three parts, summarized in three bash scripts (``PART1`
 13. Make the Bayes Factor and AIC figure for the paper
 14. Double check the bin effect on the best fit (produces a figure showing average best-fit parameters)
 
+To test for alternative periods of modulation, e.g., rotation, use scripts 8b and 10b.
+
 #### PART 3: Energetics
 
 15. Calculate the power law exponent for the flare energy distribution
