@@ -34,6 +34,8 @@ To test for alternative periods of modulation, e.g., rotation, use scripts 8b an
 17. Calculate power of SPI and plot it
 18. Calculate energy limited escape driven by CMEs
 
+To investigate the FFDs of the planet-induced and intrinsic flares, use 15b.
+
 #### Other notable scripts and data provided
 
 - Figures 1 and 2 can be reproduced with ``FIGURE_illustration_of_system.py`` and ``FIGURE_polar_histogram.py``.
