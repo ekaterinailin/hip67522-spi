@@ -5,13 +5,12 @@ UTF-8, Python 3
 HIP 67522
 ------------
 
-Ekaterina Ilin, 2024, MIT License, ilin@astron.nl
+Ekaterina Ilin, 2025, MIT License, ilin@astron.nl
 
 
-Calculate the flare energies for the TESS and CHEOPS flares of HIP 67522 and compare the FFDs.
-Fit power laws to the FFDs in different orbital phase ranges.
-Determine the detection thresholds for TESS and CHEOPS flares.
-The TESS flares are from Ilin+2024, the CHEOPS flares are from this work.
+Calculate the flare energies for the TESS and CHEOPS 
+flares of HIP 67522 and compare the FFDs
+for the clustered and baseline flares.
 """
 import os
 
