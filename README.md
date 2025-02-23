@@ -33,6 +33,7 @@ To test for alternative periods of modulation, e.g., rotation, use scripts 8b an
 16. Make the figure that puts the FFD in one figure with the Tu et al sample
 17. Calculate power of SPI and plot it
 18. Calculate energy limited escape driven by CMEs
+19. Generate corner plot, and a figure of posterior distributions for the flare rates.
 
 To investigate the FFDs of the planet-induced and intrinsic flares, use 15b.
 
