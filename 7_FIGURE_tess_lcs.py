@@ -96,6 +96,10 @@ if __name__ == "__main__":
         for s, f in zip(indices[::2], indices[1::2]):
             ax.axvspan(tinterpolate[s], tinterpolate[f], color="steelblue", alpha=0.3)
 
+            # highlight the best-fit elevated phase range
+            midtransit = (tinterpolate[s] + tinterpolate[f]) / 2
+            ax.axvspan(midtransit, midtransit+0.2*6.9594, color="k", alpha=0.4, hatch="///", fill=False)
+
     
     # last subplot xlabel
     ax.set_xlabel("Time [BJD - 2457000]")
