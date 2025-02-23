@@ -125,6 +125,9 @@ if __name__ == "__main__":
     plt.fill_between([50, 80], 0.01, 100, color="steelblue", alpha=0.3)
     plt.text(56, 30, "solar\nCMEs", color="navy", fontsize=13, alpha=0.7)
 
+    # add horizontal line at unity
+    plt.axhline(1, color="k", ls="--", lw=1)
+
     plt.yscale("log")
     plt.xlim(2, 180)
     plt.ylim(0.01, 100)
