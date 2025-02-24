@@ -27,7 +27,7 @@ def flare_factor(teff, radius, wav, resp,  tflare=10000):
     """
 
     # blackbody
-    bb = models.BlackBody(temperature=teff * u.K)
+    bb = models.BlackBody(temperature=teff * u.K, scale = 1 * u.erg / (u.cm ** 2 * u.s * u.AA * u.sr))
 
     # blackbody flux in TESS band
     bbwavs = bb(wav * u.nm)  * resp
@@ -35,7 +35,7 @@ def flare_factor(teff, radius, wav, resp,  tflare=10000):
     fluxs = np.trapz(bbwavs.value, wav)
 
     # blackbody
-    bb = models.BlackBody(temperature=tflare * u.K)
+    bb = models.BlackBody(temperature=tflare * u.K, scale = 1 * u.erg / (u.cm ** 2 * u.s * u.AA * u.sr))
 
     # blackbody flux in TESS band
     bbwavf = bb(wav * u.nm)  * resp
