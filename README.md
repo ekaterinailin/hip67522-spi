@@ -43,7 +43,7 @@ To investigate the FFDs of the planet-induced and intrinsic flares, use 15b.
 
 - Figures 1 and 2 can be reproduced with ``FIGURE_illustration_of_system.py`` and ``FIGURE_polar_histogram.py``.
 - The **CHEOPS** observing log table is produced with ``TABLE_cheops_observing_log.py``
-- Scripts with additional functionalities and checks are prefixed with ``x_``, including the script that runs the CHEOPS reduction pipeline.
+- Scripts with additional functionalities and checks are prefixed with ``x_``, including the script that runs the CHEOPS reduction pipeline, and a script that estimates the detection threshold for CHEOPS vs. TESS.
 - To run the statistics and energetic only, the flare tables are provided under _results/_.
 
 ### Installation
