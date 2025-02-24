@@ -34,7 +34,8 @@ To test for alternative periods of modulation, e.g., rotation, use scripts 8b an
 17. Calculate power of SPI and plot it
 18. Calculate energy limited escape driven by CMEs
 19. Generate corner plot, and a figure of posterior distributions for the flare rates.
-20. Calculate some context for how accurate the Shibaya model is, and how much total extra energy we get from a 15kK BB component.
+
+Use script **20.** to calculate some context for how sensitive the Shibayama et al. (2013) model is to flare temperature, and how much total extra energy we get from a 15kK BB component. Use script **21.** to view flare energies, durations and amplitudes relative to each other to see if planet-induced and intrinsic flares' morphologies are distinct or not.
 
 To investigate the FFDs of the planet-induced and intrinsic flares, use 15b.
 
