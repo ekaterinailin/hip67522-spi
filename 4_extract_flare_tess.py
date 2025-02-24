@@ -357,7 +357,7 @@ if __name__ == "__main__":
         # GET BOLOMETRIC FLARE ENERGY ------------------------------------------------------
         
         # read TESS response function
-        tess_resp = pd.read_csv("../data/tess-response-function-v2.0.csv", skiprows=7, 
+        tess_resp = pd.read_csv("data/tess-response-function-v2.0.csv", skiprows=7, 
                                 header=None, names=["Wavelength", "Throughput"])
         
         wav, resp = tess_resp.Wavelength.values, tess_resp.Throughput.values
