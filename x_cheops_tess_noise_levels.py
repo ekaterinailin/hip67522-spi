@@ -5,7 +5,7 @@ UTF-8, Python 3
 HIP 67522
 ------------
 
-Ekaterina Ilin, 2024, MIT License, ilin@astron.nl
+Ekaterina Ilin, 2025, MIT License, ilin@astron.nl
 
 Determine the mean noise level in the CHEOPS and TESS light curves.
 """
@@ -16,6 +16,9 @@ from lightkurve import search_lightcurve
 
 from altaipony.flarelc import FlareLightCurve
 from altaipony.customdetrend import custom_detrending
+
+from funcs.flares import flare_factor
+import astropy.units as u
 
 if __name__ == "__main__":
 
@@ -52,15 +55,15 @@ if __name__ == "__main__":
     # CHEOPS ------------------------------------------------
     # now load cheops lightcurves
     # load the file names
-    files = np.loadtxt("files.txt", dtype=str)
+    files = np.loadtxt("data/cheops_files.txt", dtype=str)
 
     # read the flare table
-    flares = pd.read_csv("../results/cheops_flares.csv")
+    flares = pd.read_csv("results/cheops_flares.csv")
 
     # read in all the de-trended light curves
     dlcs = []
     for pi, file in files:
-        location = f"../data/hip67522/pipe_HIP67522/HIP67522_{file}{pi}_detrended_lc.csv"
+        location = f"results/cheops/HIP67522_{file}{pi}_detrended_lc.csv"
         dlcs.append(pd.read_csv(location))
 
 
@@ -99,4 +102,29 @@ if __name__ == "__main__":
     print(f"CHEOPS point-to-point noise level: {cheopspointmean:.5f}, {cheopspointstd:.5f}")
     print(f"TESS point-to-point noise level: {tesspointmean:.5f}, {tesspointstd:.5f}")
 
+    tflare = 10000
+    teff = 5650
+    radius = 1.392
+
+    for tflare in [9000, 10000, 11000]:
+
+        print(f"Flare temperature: {tflare} K")
+
+        # read CHEOPS response function
+        cheops_resp = pd.read_csv("data/CHEOPS_bandpass.csv")
+        wav, resp = cheops_resp.WAVELENGTH.values, cheops_resp.THROUGHPUT.values
+        factor_cheops = flare_factor(teff, radius, wav, resp,  tflare=tflare)
+
+        # read TESS response function
+        tess_resp = pd.read_csv("data/tess-response-function-v2.0.csv", skiprows=7, 
+                                header=None, names=["Wavelength", "Throughput"])
+        wav, resp = tess_resp.Wavelength.values, tess_resp.Throughput.values
+        factor_tess = flare_factor(teff, radius, wav, resp,  tflare=tflare)
+
+        detection_threshold_ratio = (cheopsmed * factor_cheops * 10) / (tessmed * factor_tess * 120)
+
+        print(f"CHEOPS flare factor: {factor_cheops:.2e}")
+        print(f"TESS flare factor: {factor_tess:.2e}")
+
+        print(f"Ratio of CHEOPS/TESS: {detection_threshold_ratio:.5f}")
 
