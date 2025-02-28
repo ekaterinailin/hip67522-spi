@@ -38,7 +38,7 @@ def get_tess_orbital_phases(period, sectors,  midpoints ):
     # get LC data
     lcs = []
     for sector in sectors:
-        hdu = fits.open(f"../data/tess/tess_hip67522_{sector}.fits")
+        hdu = fits.open(f"data/tess/tess_hip67522_{sector}.fits")
 
         t = hdu[1].data["TIME"]
         f = hdu[1].data["PDCSAP_FLUX"]
