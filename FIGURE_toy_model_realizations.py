@@ -317,3 +317,98 @@ if __name__ == "__main__":
   plt.xlabel('orbital phase offset')
   plt.savefig('plots/diagnostic/dipole/toy_model_parameter_space.png', dpi=300)
   # ---------------------------------------------------------------------------
+
+
+  # MAKE AN ALTERNATIVE PLOT SHOWING DIFFERENT REALIZATIONS ---------------------
+
+  # get the average over many realizations
+  # make a grid of obliquities and inital phases
+  N1, N2 = 60, 60
+
+
+  # set up the array to calculate the average flux
+  fluxs = np.zeros_like(phi_off)
+
+  # cycle over all possible obliquities and offsets (note that oblquities are sampled in cos space)
+  for a in np.linspace(0.01, 0.99, N1):
+
+      # calculate obliquity from cos(obliquity)
+      alphamax = np.arccos(a)
+      alphamax = alphamax % (np.pi/2)
+
+      for offset in np.linspace(0.001, 1, N2):
+
+          res = get_modulation(alphamax, offset, nbins, B_0, rstar, aplanet, syn_to_orb=4)
+          B, surfacelats, foreshortening, longitude_obs, longitude_syn = res
+
+          flux = B * foreshortening
+          flux = flux[sorted_phi_args]
+          fluxs += flux**exp
+
+  avgflux = fluxs / (N1 * N2) 
+
+
+  for seednum in range(100, 102):
+
+    plt.figure(figsize=(6.5, 4.5))
+
+    # smaller range of values
+    N1, N2 = 3,2
+  
+    #seed the random 
+    np.random.seed(seednum)
+
+    # cycle over all possible obliquities and offsets (note that oblquities are sampled in cos space)
+    for a in np.random.rand(N1):
+
+        # calculate obliquity from cos(obliquity)
+        alphamax = np.arccos(a)
+        alphamax = alphamax % (np.pi/2)
+
+        for offset in np.random.rand(N2):
+
+            res = get_modulation(alphamax, offset, nbins, B_0, rstar, aplanet, syn_to_orb=4)
+            B, surfacelats, foreshortening, longitude_obs, longitude_syn = res
+
+            flux = B * foreshortening
+            flux = flux[sorted_phi_args]
+            maxphi_arg = np.argmax(flux)   
+            maxphi = phi_off[maxphi_arg]
+            maxflux = flux[maxphi_arg]
+            
+            # if the maximum flux is in the first 20% of the orbit 
+            # and the remaining flux is lower than 90% of the maximum flux
+            # add the realization to the plot
+            if (maxphi > 0.0 and maxphi < .2) & (np.max(flux[:len(flux)//2 ]) **exp <  0.9 * maxflux **exp):
+                plt.fill_between(phi_off, 0, flux**exp, color='peru', alpha=0.3, edgecolor = "k")
+
+            else:
+                plt.fill_between(phi_off, 0, flux**exp, color='steelblue', alpha=0.25, edgecolor = "k") 
+
+            
+        # shift flare phases and plot
+        phases[phases>0.5] -= 1
+        for phase in phases:
+            plt.axvline(phase, color='navy', linestyle='--', alpha=0.75, zorder=-100, linewidth=1)
+
+
+
+
+        # plot the average flux
+        plt.plot(phi_off, avgflux, c="k")
+        plt.ylim(0, 3)
+        plt.xlabel("Orbital phase of HIP 67522 b")
+        plt.ylabel("Expected flare rate (arb. u.)")
+
+        # add legend handles for the phases, flux, and averaged flux
+        custom_lines = [Line2D([0], [0], color='navy', linestyle='--', lw=2),
+                        Line2D([0], [0], color='steelblue', lw=4),
+                        Line2D([0], [0], color='peru', lw=4),
+                        Line2D([0], [0], color='k', lw=2),
+                        ]
+
+        plt.legend(custom_lines, ['Observed flares', 'Model realizations', 'Peak offset', 'Averaged model'], 
+                  loc=(0.69,0.74), frameon=False, fontsize=9.5)
+        plt.tight_layout()
+
+        plt.savefig(f'plots/paper/general_toy_model_realizations_{seednum}.png', dpi=300)
