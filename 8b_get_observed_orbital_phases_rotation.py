@@ -118,6 +118,7 @@ if __name__ == "__main__":
     period = hip67522params[hip67522params.param=="orbper_d"].val.values[0]
     period = 3.305794
     period = 1.459132
+    period = 1.742841
     
 
 
