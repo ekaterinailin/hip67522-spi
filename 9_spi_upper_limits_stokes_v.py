@@ -132,6 +132,12 @@ if __name__ == "__main__":
     fluxes = np.array([flux(power, omega=omega) for power in powers])
 
     
+    predicted_power = 6.3e25 * u.erg / u.s
+
+    flux_at_predicted_power = flux(predicted_power, omega=4* np.pi)    
+
+    print(f"Predicted power of SPI: {predicted_power:.2e}")
+    print(f"Flux at predicted power: {flux_at_predicted_power:.2f} mJy")
 
     # plot
     # plt.plot(powers,fluxes)
@@ -141,7 +147,7 @@ if __name__ == "__main__":
 
     power_at_upperlim = powers[np.argmin(np.abs(fluxes - upperlimit))]
 
-    fraction_of_predicted_power = power_at_upperlim / (6.3e25 * u.erg / u.s) # from Ilin+2024
+    fraction_of_predicted_power = power_at_upperlim / predicted_power # from Ilin+2024
 
     print(f"Power of SPI at measured upper limit: {power_at_upperlim:.2e}")
     print(f"... which is a fraction of predicted power of 6.3e25 erg/s: {fraction_of_predicted_power:.3f}")
