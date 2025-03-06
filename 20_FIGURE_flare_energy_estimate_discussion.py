@@ -60,10 +60,21 @@ if __name__ == "__main__":
 
     ffactor_tess = np.array([flare_factor(teff, radius, wav, resp,  tflare=tf).value for tf in tflares])
 
+    # read Kepler response function
+    kepler_resp = pd.read_csv("data/kepler/kepler_resp.csv")
+    wav, resp = kepler_resp["lambda"].values.astype(float), kepler_resp.resp.values.astype(float)
+
+    teff = 4500
+    f10k = flare_factor(teff, radius, wav, resp,  tflare=10000).value
+    ratio_9000_10000_kepler = (f10k - flare_factor(teff, radius, wav, resp,  tflare=9000).value) / f10k
+
+
+
     print(f"Reduce flare temperature from 10k to 9k in CHEOPS: {ratio_9000_10000_cheops:.2f}")
-    print(f"Increase flare temperature from 10k to 9k in CHEOPS: {ratio_10000_11000_cheops:.2f}")
+    print(f"Increase flare temperature from 10k to 11k in CHEOPS: {ratio_10000_11000_cheops:.2f}")
     print(f"Reduce flare temperature from 10k to 9k in TESS: {ratio_9000_10000_tess:.2f}")
-    print(f"Increase flare temperature from 10k to 9k in TESS: {ratio_10000_11000_tess:.2f}")
+    print(f"Increase flare temperature from 10k to 11k in TESS: {ratio_10000_11000_tess:.2f}")
+    print(f"Reduce flare temperature from 10k to 9k in Kepler: {ratio_9000_10000_kepler:.2f}")
 
 
     # PLOT the temperature dependence of the flare factor
