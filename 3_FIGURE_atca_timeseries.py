@@ -24,21 +24,11 @@ import matplotlib.pyplot as plt
 import warnings
 
 
+from funcs.helper import COLORS as CS
+
 # set default font size in matplotlib
 plt.rcParams.update({'font.size': 12})
 
-colors = [
-    "cyan",  # Blue
-    "#D95F0E",  # Vermilion
-    "#009E73",  # Teal
-    "maroon",  # maroon
-    "#CC79A7",  # Pink
-    "#56B4E9",  # Sky Blue
-    "#FF7F00",  # Orange
-    "olive",   # Dark Red
-    "#FF4500",   # Orange Red
-    "#1F78B4" # Blue
-        ]*2
 
 if __name__ == "__main__":
 
@@ -56,10 +46,11 @@ if __name__ == "__main__":
               #  ("Rotational phase of HIP 67522", "rot_phase", axs[1])] 
 
 
+    colors = CS.copy()  
     for version, phase, ax in versions[:1]:
         # plot the flux density vs time
         
-
+        
         for obsname, g in df.groupby('obsname'):
             
             # insert slashes after YYYY/MM/DD
@@ -69,9 +60,10 @@ if __name__ == "__main__":
             c = colors.pop()
 
             g1 = g[g['source_J_val']]
-            ax.errorbar(g1[phase], g1['source_J']*1e3, yerr=g1['bkg_rms_J']*1e3, fmt='o', c=c, label=obsname)
+            ax.errorbar(g1[phase], g1['source_J']*1e3, yerr=g1['bkg_rms_J']*1e3, fmt='o', c="k", markersize=6,)
+            ax.errorbar(g1[phase], g1['source_J']*1e3, yerr=g1['bkg_rms_J']*1e3, fmt='o', c=c, label=obsname, markersize=5)
             g2 = g[~g['source_J_val']]
-            ax.errorbar(g2[phase], g2['bkg_rms_J']*5*1e3, yerr=g2['bkg_rms_J']*1e3, fmt='.', color=c, uplims=True, alpha=0.3)
+            ax.errorbar(g2[phase], g2['bkg_rms_J']*5*1e3, yerr=g2['bkg_rms_J']*1e3, fmt='.', color=c, uplims=True, alpha=0.5)
 
         # plot the full integration fluxes
         f2 = full_integration_fluxes[~full_integration_fluxes['source_J_val']]
@@ -98,10 +90,12 @@ if __name__ == "__main__":
 
     # PLOT ALL THE OBSERVATIONS IN A GRID ---------------------------------------------------------------
 
+
     # set up a vertical 3 x 5 grid of subplots
     fig, axs = plt.subplots(5, 2, figsize=(21/2, 29.7/2), sharey=True)
     axs = axs.flatten()
 
+    colors = CS.copy()
     # loop over each observation and plot the flux density vs orbital phase
     for i, (obsname, group) in enumerate(df.groupby('obsname')):
 
@@ -109,10 +103,10 @@ if __name__ == "__main__":
         ax = axs[i]
         
         g1 = group[group["source_J_val"]]
-        ax.errorbar(g1['jd'], g1['source_J'], yerr=g1['bkg_rms_J'], fmt='o', c="blue")
+        ax.errorbar(g1['jd'], g1['source_J']*1e3, yerr=g1['bkg_rms_J']*1e3, fmt='o', c=colors.pop(), markersize=8)
         
         g2 = group[~group["source_J_val"]]
-        ax.errorbar(g2['jd'], g2['bkg_rms_J']*5, yerr=g2['bkg_rms_J'], fmt='o', color="grey", uplims=True)
+        ax.errorbar(g2['jd'], g2['bkg_rms_J']*5*1e3, yerr=g2['bkg_rms_J']*1e3, fmt='o', color="grey", uplims=True)
         
         ax.set_title(group["date"].iloc[0], fontsize=12)
 
@@ -124,7 +118,7 @@ if __name__ == "__main__":
 
     # set y-labels for the left column
     for ax in axs[::2]:
-        ax.set_ylabel('Flux density [Jy]')
+        ax.set_ylabel('Flux density [mJy]')
 
     plt.tight_layout()
 

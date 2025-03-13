@@ -234,9 +234,9 @@ if __name__ == "__main__":
         label = label[:4] + "/" + label[4:6] + "/" + label[6:8]
         m = np.isnan(row)
         c = color.pop()
-        plt.errorbar(freqs[~m], row[~m], yerr=errorrow[~m], fmt='d', c=c, markersize =8, zorder=-10)
-        plt.scatter(freqs[~m], row[~m], c="k", s=80, marker='d')
-        plt.scatter(freqs[~m], row[~m], marker='d', c=c, s =30)#, label=label)
+        plt.errorbar(freqs[~m], row[~m], yerr=errorrow[~m], fmt='d', c=c, markersize =3, zorder=-10)
+        plt.scatter(freqs[~m], row[~m], c="k", s=60, marker='d')
+        plt.scatter(freqs[~m], row[~m], marker='d', c=c, s =25)#, label=label)
 
 
     # layout
