@@ -16,6 +16,10 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.patches import FancyArrowPatch, Circle
 
+# set the font size to
+plt.rcParams.update({'font.size': 6.5})
+inch_mm = 0.03937008
+
 if __name__ == "__main__":
     
     # # GET STELLAR AND PLANET PARAMETERS -----------------------------------------------------
@@ -64,7 +68,7 @@ if __name__ == "__main__":
     # MAKE A POLAR HISTORGRAM ----------------------------------------------------------------
 
     # set up the figure ----------------------------------------------------------
-    fig = plt.figure(figsize=(6, 6))
+    fig = plt.figure(figsize=(89 * inch_mm, 89 * inch_mm * 0.7), dpi=300)
     ax = fig.add_subplot(111, polar=True)
 
     # make the axes grey
@@ -78,13 +82,22 @@ if __name__ == "__main__":
     ax.set_rlabel_position(118)
 
     # add the grid
-    ax.grid(zorder=1, linestyle='--', color='gray')
+    ax.grid(zorder=1, linestyle='--', color='gray', lw=0.5, alpha=0.5)
 
     # Change the color of the radial (r-axis) labels only
     for label in ax.get_yaxis().get_ticklabels():
-        label.set_color('navy')  # Set radial labels color to red
-        label.set_fontsize(11)  # Optionally adjust the font size
-        label.set_fontweight('bold')  # Optionally adjust the font weight
+        label.set_color('navy')  # Set radial labels color 
+        label.set_fontsize(5)  # Optionally adjust the font size
+        # label.set_fontweight('bold')  # Optionally adjust the font weight
+        # rotate the labels
+
+    # labels = ['One', 'Two', 'Three']
+    labels = ["0.2", "0.4", "0.6", "0.8", "1.0"]
+    # off = 0.06/
+    ax.set_yticks(np.array([0.2, 0.4, 0.6, 0.8, 1.0]))
+    # ax.set_yticks([1, 2, 3])
+    ax.set_yticklabels(labels, rotation=20, ha='center', fontsize=5, color='navy')
+
 
     # set the radius limits
     ax.set_ylim(0, 1.2)
@@ -92,14 +105,14 @@ if __name__ == "__main__":
 
     # plot the histogram of flare rates --------------------------------------------
     ax.bar(binmids*2*np.pi , width=np.pi*2/nbins, height=hist/binned,  
-        facecolor='steelblue', alpha=0.8, edgecolor='navy', linewidth=2)
+        facecolor='steelblue', alpha=0.8, edgecolor='navy', linewidth=0.5)
 
     # annotate the histogram
-    ax.text(0.2, 1.03, r'Flare rate [d$^{-1}$]', fontsize=12, rotation=0, 
-            ha='center', va='center', transform=ax.transAxes, color="navy", fontweight='bold')
+    ax.text(0.2, 1.03, r'Flare rate [d$^{-1}$]',  rotation=0, 
+            ha='center', va='center', transform=ax.transAxes, color="navy")
 
     # plot the star
-    circle = Circle((0, 0), radius=0.12, transform=ax.transData._b, 
+    circle = Circle((0, 0), radius=0.12, transform=ax.transData._b, linewidth=0.4,
                     facecolor='orange', alpha=0.9, zorder=-1, edgecolor='black')
     ax.add_artist(circle)
 
@@ -113,8 +126,8 @@ if __name__ == "__main__":
     y = np.cos(x)**(powerexp - 1) * 1.2 
 
     
-    ax.plot(x, y, color='orange', linewidth=2, linestyle='--', alpha=0.8)
-    ax.fill_between(x, y, 0, color='orange', alpha=0.2)
+    ax.plot(x, y, color='orange', linewidth=0.5, linestyle='--', alpha=0.8)
+    ax.fill_between(x, y, 0, color='orange', alpha=0.2, linewidth=0.5)
 
     # ------------------------------------------------------------------------------
 
@@ -131,21 +144,21 @@ if __name__ == "__main__":
 
 
     # arrow to the observer
-    ax_larger.arrow(2.2, 0.5, 0.5, 0, head_width=0.02, head_length=0.05, 
-                    fc='grey', ec='steelblue', linewidth=1)
-    ax_larger.annotate('Observer', xy=(2.5, 0.6), xytext=(2.4, 0.515), 
-                    fontsize=12, ha='center', color="navy",zorder=10)
+    ax_larger.arrow(1.9, 0.5, 0.5, 0, head_width=0.02, head_length=0.05, 
+                    fc='steelblue', ec='steelblue', linewidth=0.5)
+    ax_larger.annotate('Observer', xy=(2.2, 0.6), xytext=(2.1, 0.515), 
+                      ha='center', color="navy",zorder=10)
 
 
     # Ccurved arrow around the polar plot
     arrow = FancyArrowPatch(
-        (2.1, 0.6),             # Arrow start (on the edge of the circle)
-        (1.9, 0.75),             # Arrow end (90 degrees from the start point)
+        (1.745, 0.62),             # Arrow start (on the edge of the circle)
+        (1.595, 0.76),             # Arrow end (90 degrees from the start point)
         mutation_scale=2,  # Scale of the arrow
         color='steelblue',        # Color of the arrowhead
-        alpha=0.8,          # Transparency of the arrow
-        linewidth=1,        # Line thickness
-        arrowstyle='Simple,head_width=4,head_length=4',    # Arrow style
+        alpha=1,          # Transparency of the arrow
+        linewidth=.5,        # Line thickness
+        arrowstyle='Simple,head_width=2,head_length=2',    # Arrow style
         connectionstyle="arc3,rad=.1"  # Curved connection for the arrow
     )
 
@@ -153,15 +166,18 @@ if __name__ == "__main__":
     ax_larger.add_patch(arrow)
 
     # annotate the arrow
-    ax_larger.annotate(r'HIP 67522 b', xy=(2.3, 0.57), xytext=(2.08, 0.67), fontsize=12, ha='left', color="navy")
+    ax_larger.annotate(r'HIP 67522 b', xy=(1.7, 0.47), xytext=(1.78, 0.67), ha='left', color="navy")
 
     # add planet as a small circle -- to scale!
-    circle = Circle((1.357 ,0.352), radius=0.12* 0.0668, transform=ax.transData._b, facecolor='black', alpha=1, zorder=1, edgecolor='black')
+    circle = Circle((1.425 ,0.352), radius=0.12* 0.0668, transform=ax.transData._b, 
+                    facecolor='black', alpha=1, zorder=1, edgecolor='black', linewidth=0.5)
     ax_larger.add_artist(circle)
 
     # annotate expected flare rate
-    ax_larger.annotate(r'Expected flare rate', xy=(2.1, .2), xytext=(2.4, 0.4), fontsize=12, ha='center', color="peru")
+    ax_larger.annotate(r'Expected flare rate', xy=(1.6, .2), xytext=(2., 0.4), ha='center', color="peru")
 
 
 
     plt.savefig("plots/paper/polar.png", dpi=300, bbox_inches='tight')
+    plt.savefig("plots/paper/polar.pdf", dpi=300, bbox_inches='tight')
+    plt.savefig("../nature/final/figures/FIG2_polar.pdf", dpi=300, bbox_inches='tight')

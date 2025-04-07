@@ -403,7 +403,8 @@ def rossby_reiners2014(Lbol, Prot, error=False, Lbol_high=None,
 
 
 # increase font size
-plt.rcParams.update({'font.size': 13})
+plt.rcParams.update({'font.size': 6})
+inch_mm = 0.03937008
 
 if __name__ == "__main__":
 
@@ -509,7 +510,7 @@ if __name__ == "__main__":
 
     # plot the total flaring SPI flux as a function of maximum flare energy --------------------------------
 
-    plt.figure(figsize=(8, 6))
+    plt.figure(figsize=(89 * inch_mm, 89 * inch_mm * 0.7), dpi=300)
 
 
     # define a range of maximum flare energies
@@ -530,19 +531,19 @@ if __name__ == "__main__":
         tot_flux = (tot_flux * u.erg / u.d).to("erg/s").value
 
         # plot
-        plt.plot(Emaxs, tot_flux, alpha=0.4, color="navy")
+        plt.plot(Emaxs, tot_flux, color="navy")
 
     # add legend handle for observed SPI flux
-    plt.plot([], [], color="navy", alpha=0.7, label="Planet-induced flare flux from observations") 
+    plt.plot([], [], color="navy", label="Planet-induced flare flux from observations") 
 
     # fill between min and max expected SPI flux
-    plt.fill_between(Emaxs, minspi, maxspi, color="steelblue", alpha=0.6, label="Star-planet interaction flux (Saur et al. 2013)")    
+    plt.fill_between(Emaxs, minspi, maxspi, color="#A3BDD9", label="Star-planet interaction flux (Saur et al. 2013)")    
 
     # add line for maximum flare energy in sample
-    plt.axvline(Emax.value, color="black", linestyle="--", label="Max. flare energy in clustered region")
+    plt.axvline(Emax.value, color="black", linestyle="--", label="Max. flare energy in clustered region", lw=0.5)
 
     # add line for upper limit on SPI flux based on LX
-    plt.axhline(lx, color="black", linestyle=":", label=r"Upper limit $L_{\rm SPI} < L_{\rm X}$")
+    plt.axhline(lx, color="black", linestyle=":", label=r"Upper limit $L_{\rm SPI} < L_{\rm X}$", lw=0.5)
 
     # plt.axhline(4.8e29) #-- this where the power quoted in the paper is
     # calculate tot_flux closest to Emax
@@ -558,8 +559,11 @@ if __name__ == "__main__":
     plt.ylabel("Power [erg/s]")
     plt.xlabel(r"Maximum planet-induced flare energy $E_{\rm max}$ [erg]")
     plt.xlim(Emaxs[0], Emaxs[-1])
-    plt.legend(loc=(0.33, 0.05), frameon=False, fontsize=11.5)  
+    plt.legend(loc=(0.3, 0.05), frameon=False, fontsize=5.2)  
+    plt.tight_layout()
     plt.savefig("plots/paper/SPI_flux_vs_Emax.png", dpi=300)
+    plt.savefig("plots/paper/SPI_flux_vs_Emax.pdf", dpi=300)
+    plt.savefig("../nature/final/figures/EDFIG5_SPI_flux_vs_Emax.eps", dpi=300)
 
     # what is the frequency of flares above Emax * X?
     X = 1

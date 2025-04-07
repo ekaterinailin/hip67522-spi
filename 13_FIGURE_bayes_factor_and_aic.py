@@ -14,6 +14,10 @@ Get some diagnostics.
 import pandas as pd
 import matplotlib.pyplot as plt
 
+# font size
+plt.rcParams.update({'font.size': 6})
+inch_mm = 0.03937008
+
 if __name__ == "__main__":
 
     # read ../results/bayes_factor.txt
@@ -37,13 +41,13 @@ if __name__ == "__main__":
 
 
     # MAKE A PLOT OF BOTH
-    fig, (ax1, ax2) = plt.subplots(nrows=2, ncols=1, figsize=(6,5.5), sharex=True)
+    fig, (ax1, ax2) = plt.subplots(nrows=2, ncols=1, figsize=(89 *inch_mm, 89 * inch_mm * 0.7), sharex=True, dpi=300)
 
-    ax1.scatter(df['nbinedges'] - 1, df['K'], s=10, marker='x', color="navy")
+    ax1.scatter(df['nbinedges'] - 1, df['K'], s=1, marker='x', color="navy")
     ax1.set_ylabel(r'$K$')
     ax1.set_ylim(0,19)
 
-    ax2.scatter(aics["nbinedges"] - 1, aics["deltaAIC"], s=10, marker='x', color="navy")
+    ax2.scatter(aics["nbinedges"] - 1, aics["deltaAIC"], s=1, marker='x', color="navy")
     ax2.set_ylabel(r'$\Delta$ AIC')
     ax2.set_ylim(-12,0)
 
@@ -59,5 +63,7 @@ if __name__ == "__main__":
     ax1.yaxis.get_major_ticks()[0].label1.set_visible(False)
 
     plt.savefig('plots/paper/aic_and_bayes_factor.png', dpi=300)
+    plt.savefig('plots/paper/aic_and_bayes_factor.jpeg', dpi=300)
+    plt.savefig('../nature/final/figures/EDFIG4_aic_and_bayes_factor.eps', dpi=300)
 
     

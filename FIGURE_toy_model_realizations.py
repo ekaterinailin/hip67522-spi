@@ -18,6 +18,8 @@ from matplotlib.lines import Line2D
 
 import os
 
+inch_mm = 0.03937008
+
 def get_surface_latitudes(aplanet, alphas, rstar = 1):
   """
   Calculate the observed latitude of the dominant SPI spot on the star.
@@ -99,7 +101,7 @@ def get_modulation(alphamax, offset, nbins, B_0, rstar, aplanet, syn_to_orb=4):
 
 
 # increase the font size
-plt.rcParams.update({'font.size': 12})
+plt.rcParams.update({'font.size': 6.5})
 
 if __name__ == "__main__":  
 
@@ -146,16 +148,16 @@ if __name__ == "__main__":
   # field that the planet sees; strongest field at alpha=0
   B = B_0 * (rstar / aplanet)**3 * np.sqrt(1 + 3*np.cos(alphas-np.pi/2)**2)
 
-  plt.plot(phi, B  ,c="k")
+  plt.plot(phi, B  ,c="k", lw=0.5)
 
   plt.ylabel('B [G]')
   plt.xlabel("synodic phase")
   # add a dual axis
   ax2 = plt.gca().twinx()
-  ax2.plot(phi, surfacelats , c='red')
+  ax2.plot(phi, surfacelats , c='red', lw=0.5)
 
   # plt.plot(phi, alphas  , label='B [G]', c="g")
-  plt.plot(phi, surfacelons * 180/np.pi, c="b", label="footpoint longitude [deg]")
+  plt.plot(phi, surfacelons * 180/np.pi, c="b", label="footpoint longitude [deg]", lw=0.5)
 
   ax2.set_ylabel('footpoint latitude [deg]', color='red')
 
@@ -163,7 +165,7 @@ if __name__ == "__main__":
   plt.legend(loc=(0.4, 1.02), frameon=False)
 
   # text in the upper left corner of image with alphamax
-  plt.text(0.0,  0.94, rf'obliqiuity = {alphamax*180/np.pi:.0f}°', fontsize=14, transform=plt.gcf().transFigure, fontweight='bold')
+  plt.text(0.0,  0.94, rf'obliqiuity = {alphamax*180/np.pi:.0f}°', fontsize=6, transform=plt.gcf().transFigure, fontweight='bold')
 
   plt.xlim(0,1)
   plt.savefig(f"plots/diagnostic/dipole/dipole_footpoint_{alphamax * 180 / np.pi:.0f}_deg_obliquity.png", dpi=300)
@@ -201,7 +203,7 @@ if __name__ == "__main__":
   plt.figure()
 
   # plot left axis
-  plt.plot(phi_off, B , c="k")
+  plt.plot(phi_off, B , c="k", lw=0.5)
   plt.ylabel('magnetic field strength $B$ at planet b [G]')
   plt.xlabel("orbital phase")
   plt.ylim(np.mean(B) - 2, np.mean(B) + 2)
@@ -209,14 +211,14 @@ if __name__ == "__main__":
 
   # add a dual axis
   ax2 = plt.gca().twinx()
-  ax2.plot(phi_off, surfacelats, c='magenta')
-  ax2.plot(phi_off, foreshortening * 1e1 , 
+  ax2.plot(phi_off, surfacelats, c='magenta', lw=0.5)
+  ax2.plot(phi_off, foreshortening * 1e1 , lw=0.5, 
             c='blue', label='self-shadowing factor' )
 
-  ax2.plot(phi_off, foreshortening * B * 10, 
+  ax2.plot(phi_off, foreshortening * B * 10, lw=0.5,
             c='green',  label=r'expected flux $\sim$ self-shadowing $\times B$')
 
-  plt.legend(loc=(0.2,1.01), frameon=False, fontsize=12)
+  plt.legend(loc=(0.2,1.01), frameon=False, fontsize=6)
 
   ax2.set_ylabel('visible footpoint latitude [deg]', color='magenta')
   plt.xlim(-0.5, 0.5)
@@ -276,7 +278,7 @@ if __name__ == "__main__":
           # and the remaining flux is lower than 90% of the maximum flux
           # add the realization to the plot
           if (maxphi > 0.0 and maxphi < .2) & (np.max(flux[:len(flux)//2 ]) **exp <  0.9 * maxflux **exp):
-              plt.fill_between(phi_off, 0, flux**exp, color='steelblue', alpha=0.008, edgecolor = "k")
+              plt.fill_between(phi_off, 0, flux**exp, color='steelblue', alpha=0.008, edgecolor = "k", lw=0.5)
               offs.append(offset)
               amaxs.append(alphamax)
 
@@ -285,22 +287,22 @@ if __name__ == "__main__":
   # shift flare phases and plot
   phases[phases>0.5] -= 1
   for phase in phases:
-      plt.axvline(phase, color='navy', linestyle='--', alpha=0.75)
+      plt.axvline(phase, color='navy', linestyle='--', alpha=0.75, lw=0.5)
 
   # plot the average flux
-  plt.plot(phi_off, fluxs / len(offs), c="k")
+  plt.plot(phi_off, fluxs / len(offs), c="k", lw=0.5)
   plt.ylim(0, 3)
   plt.xlabel("Orbital phase of HIP 67522 b")
   plt.ylabel("Expected interaction flux (arb. u.)")
 
   # add legend handles for the phases, flux, and averaged flux
-  custom_lines = [Line2D([0], [0], color='navy', linestyle='--', lw=2),
-                  Line2D([0], [0], color='steelblue', lw=4),
-                  Line2D([0], [0], color='k', lw=2),
+  custom_lines = [Line2D([0], [0], color='navy', linestyle='--', lw=1),
+                  Line2D([0], [0], color='steelblue', lw=2),
+                  Line2D([0], [0], color='k', lw=1),
                   ]
 
   plt.legend(custom_lines, ['Observed flares', 'Model realizations', 'Averaged model'], 
-            loc=(0.7,0.8), frameon=False, fontsize=10)
+            loc=(0.7,0.8), frameon=False, fontsize=6)
 
   plt.savefig('plots/paper/toy_model_realizations.png', dpi=300)
   # ---------------------------------------------------------------------------
@@ -350,7 +352,7 @@ if __name__ == "__main__":
 
   for seednum in range(100, 102):
 
-    plt.figure(figsize=(6.5, 4.5))
+    plt.figure(figsize=(89*inch_mm, 89*inch_mm*0.7))
 
     # smaller range of values
     N1, N2 = 3,2
@@ -380,35 +382,37 @@ if __name__ == "__main__":
             # and the remaining flux is lower than 90% of the maximum flux
             # add the realization to the plot
             if (maxphi > 0.0 and maxphi < .2) & (np.max(flux[:len(flux)//2 ]) **exp <  0.9 * maxflux **exp):
-                plt.fill_between(phi_off, 0, flux**exp, color='peru', alpha=0.3, edgecolor = "k")
+                plt.fill_between(phi_off, 0, flux**exp, color='peru', alpha=0.3, edgecolor = "k", lw=0.5)
 
             else:
-                plt.fill_between(phi_off, 0, flux**exp, color='steelblue', alpha=0.25, edgecolor = "k") 
+                plt.fill_between(phi_off, 0, flux**exp, color='steelblue', alpha=0.25, edgecolor = "k", lw=0.5) 
 
             
         # shift flare phases and plot
         phases[phases>0.5] -= 1
         for phase in phases:
-            plt.axvline(phase, color='navy', linestyle='--', alpha=0.75, zorder=-100, linewidth=1)
+            plt.axvline(phase, color='navy', linestyle='--', alpha=0.75, zorder=-100, linewidth=1, lw=0.5)
 
 
 
 
         # plot the average flux
-        plt.plot(phi_off, avgflux, c="k")
+        plt.plot(phi_off, avgflux, c="k", lw=0.5)
         plt.ylim(0, 3)
         plt.xlabel("Orbital phase of HIP 67522 b")
-        plt.ylabel("Expected flare rate (arb. u.)")
+        plt.ylabel("Expected flare rate [arb. u.]")
 
         # add legend handles for the phases, flux, and averaged flux
-        custom_lines = [Line2D([0], [0], color='navy', linestyle='--', lw=2),
+        custom_lines = [Line2D([0], [0], color='navy', linestyle='--', lw=0.8),
                         Line2D([0], [0], color='steelblue', lw=4),
                         Line2D([0], [0], color='peru', lw=4),
                         Line2D([0], [0], color='k', lw=2),
                         ]
 
         plt.legend(custom_lines, ['Observed flares', 'Model realizations', 'Peak offset', 'Averaged model'], 
-                  loc=(0.69,0.74), frameon=False, fontsize=9.5)
+                  loc=(0.69,0.74), frameon=False, fontsize=5)
         plt.tight_layout()
 
         plt.savefig(f'plots/paper/general_toy_model_realizations_{seednum}.png', dpi=300)
+        plt.savefig(f'plots/paper/general_toy_model_realizations_{seednum}.pdf', dpi=300)
+        plt.savefig(f'../nature/final/figures/FIG_4_general_toy_model_realizations_{seednum}.pdf', dpi=300)

@@ -20,7 +20,8 @@ from astropy.constants import G
 import matplotlib.pyplot as plt
 
 # set font size to 13
-plt.rcParams.update({'font.size': 13})
+plt.rcParams.update({'font.size': 6})
+inch_mm = 0.03937008
 
 def get_mass_loss_rate(factor, angle, flare_rate, alpha, Emin, Emax, a, Rstar, planet_radius, planet_mass):
 
@@ -95,14 +96,30 @@ if __name__ == "__main__":
     # plot range of factors
     factors = np.logspace(-2, 0, 11)
     angles = np.linspace(0, 180, 100)
+    colors = [
+    "#4682B4",  # 0%
+    "#507FB5",  # ~3.3%
+    "#5A7CB6",  # ~6.7%
+    "#6489B8",  # ~10%
+    "#6E96BA",  # ~13.3%
+    "#78A3BB",  # ~16.7%
+    "#82B0BD",  # ~20%
+    "#8CBCC0",  # ~23.3%
+    "#96C9C2",  # ~26.7%
+    "#A0D6C4"   # 30%
+]
+
+
 
     params = (flare_rate, alpha, Emin, Emax, a, Rstar, planet_radius, planet_mass)
 
+    plt.figure(figsize=(89 * inch_mm, 89 * inch_mm * 0.7), dpi=300)
+
     for f in factors:
         if 0.08 < f < 0.13: # highlight the typical value
-            c="peru"
+            c="#EAD1B3"
             ml = get_mass_loss_rate(f, angles, *params).value / thao_dot_m
-            plt.plot(angles, ml, label=f, alpha=f**(1/4), c=c)
+            plt.plot(angles, ml, label=f, c=c, lw=0.5)
 
             # where does ml intersect 50 and 80 deg?
             int1, int2 = ml[np.argmin(np.abs(angles - 50))], ml[np.argmin(np.abs(angles - 80))]
@@ -111,30 +128,32 @@ if __name__ == "__main__":
             print(f"This shortens the atmosphere's lifetime from 1000 Myr "
                   f"to {1000 / (1+int1):.0f}-{1000 / (1+int2):.0f} Myr.")
         else:
-            c="navy"
+            c=colors.pop(0)
             ml = get_mass_loss_rate(f, angles, *params).value / thao_dot_m
-            plt.plot(angles, ml, label=f, alpha=f**(1/4), c=c)
+            plt.plot(angles, ml, label=f, c=c, lw=0.5)
 
         # annotate with f
-        plt.text(183 , ml[-1], f"{f:.2f}", color=c, alpha=0.9, fontsize=11)
+        plt.text(183 , ml[-1], f"{f:.2f}", color=c)
 
-    plt.text(183, 2, r"$\eta$", color="navy", fontsize=13, alpha=0.9)
+    plt.text(183, 2, r"$\eta$", color="navy", )
 
 
     # fill between 50 and 80 deg
-    plt.fill_between([50, 80], 0.01, 100, color="steelblue", alpha=0.3)
-    plt.text(56, 30, "solar\nCMEs", color="navy", fontsize=13, alpha=0.7)
+    plt.fill_between([50, 80], 0.01, 100, color="#BFBFE0", zorder=-2)
+    plt.text(56, 30, "solar\nCMEs", color="navy")
 
     # add horizontal line at unity
-    plt.axhline(1, color="k", ls="--", lw=1)
+    plt.axhline(1, color="k", ls="--", lw=0.5)
 
     plt.yscale("log")
     plt.xlim(2, 180)
     plt.ylim(0.01, 100)
-    plt.ylabel("CME-driven mass loss rate \n[XUV-driven mass loss rate from Thao+2024]", fontsize=13)
-    plt.xlabel("CME opening angle [deg]", fontsize=13)
+    plt.ylabel("CME-driven mass loss rate \n[XUV-driven mass loss rate from Thao+2024]")
+    plt.xlabel("CME opening angle [deg]")
     plt.tight_layout()
 
     plt.savefig("plots/paper/mass_loss_rate_vs_cme_angle.png", dpi=300)
+    plt.savefig("plots/paper/mass_loss_rate_vs_cme_angle.pdf", dpi=300)
+    plt.savefig("../nature/final/figures/EDFIG6_mass_loss_rate_vs_cme_angle.eps", dpi=300)
 
 

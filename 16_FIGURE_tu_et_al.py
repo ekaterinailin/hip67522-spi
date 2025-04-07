@@ -17,6 +17,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 from altaipony.ffd import FFD
 
+# font size 6
+plt.rcParams.update({'font.size': 6})
+inch_mm = 0.03937008    
+
 if __name__ == "__main__":
 
     # Load the data from Tu et al
@@ -80,41 +84,42 @@ if __name__ == "__main__":
 
     # PLOT THE FIGURE -------------------------------------------------------------
 
-    plt.figure(figsize=(6,5))
+    plt.figure(figsize=(89 * inch_mm, 89 * inch_mm * 0.7), dpi=300)
 
     # make an FFD for hip and plot it
     ffdhip = FFD(hip[hip.ed_rec >= emin])
     ffdhip.tot_obs_time = 74.5
     ed, freq, counts = ffdhip.ed_and_freq()
-    plt.errorbar(ed, freq, c="navy",zorder=10, fmt="o-")
+    plt.errorbar(ed, freq, c="navy",zorder=10, fmt="o-", lw=0.5, markersize=1)
 
     # plot FFDs
     for ed, freq in zip(eds, freqs):
-        plt.errorbar(ed, freq, alpha=0.8, color="steelblue", fmt="o-")
+        plt.errorbar(ed, freq, color="#79A5C5", fmt="o-", lw=0.5, markersize=1)
 
     # plot the limits
-    plt.axvline(emin, c="navy", linestyle="--", alpha=0.8)
-    plt.axhline(2, c="navy", linestyle="--", alpha=0.8)
-    plt.text(emin*1.1, 2*1.05, f"flare rate upper limit", fontsize=11, va="bottom", ha="left")
+    plt.axvline(emin, c="navy", linestyle="--", lw=0.5)
+    plt.axhline(2, c="navy", linestyle="--", lw=0.5)
+    plt.text(emin*1.1, 2*1.05, f"flare rate upper limit", va="bottom", ha="left")
 
 
     # make legend handles ------
-    handle = plt.Line2D([0], [0], marker="o", color='w', markerfacecolor='steelblue', markersize=10, 
+    handle = plt.Line2D([0], [0], marker="o", color='w', markerfacecolor='#79A5C5', markersize=5, 
                         label=f"Tu et al. 2020 (N={len(eds)})")
 
-    handlehip = plt.Line2D([0], [0], marker='o', color='w', markerfacecolor='navy', markersize=10,
+    handlehip = plt.Line2D([0], [0], marker='o', color='w', markerfacecolor='navy', markersize=5,
                         label="HIP 67522, 5650 K, 1.42 d")
 
 
     plt.legend(handles=[handle, handlehip], loc=(0.48, 0.85), frameon=False)
     # ----------------------------
 
-    plt.xlabel(r"$E_{\rm flare}$ [erg]", fontsize=12)
-    plt.ylabel("cumulative number of flares per day", fontsize=12)
+    plt.xlabel(r"$E_{\rm flare}$ [erg]")
+    plt.ylabel("cumulative number of flares per day")
     plt.xlim(3e33, 1e37)
     plt.ylim(1e-3, 1e1)
     plt.xscale("log")
     plt.yscale("log")
 
     plt.savefig("plots/paper/tu.png", dpi=300, bbox_inches="tight")
-
+    plt.savefig("plots/paper/tu.pdf", dpi=300, bbox_inches="tight")
+    plt.savefig("../nature/final/figures/EDFIG7_tu.eps", dpi=300, bbox_inches="tight")

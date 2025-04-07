@@ -13,6 +13,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 import batman
 
+# from matplotlib.ticker import FormatStrFormatter
+
+# font size 6
+plt.rcParams.update({'font.size': 5.5})
+inch_mm = 0.03937008
+
 if __name__ == "__main__":
 
     # get flare data
@@ -41,7 +47,9 @@ if __name__ == "__main__":
 
     # FULL LIGHT CURVES --------------------------------------------------------
 
-    fig, axes = plt.subplots(nrows=3, ncols=1, figsize=(10, 7))
+    fig, axes = plt.subplots(nrows=3, ncols=1, figsize=(183 * inch_mm, 110 * inch_mm))
+
+    labels = ["a","b", "c"]
 
     for sector, ax in zip([11, 38, 64], axes):
 
@@ -69,7 +77,7 @@ if __name__ == "__main__":
         ferr = ferr.astype(float)
 
         # plot the light curve
-        ax.scatter(t, f, c="navy", s=0.1)
+        ax.scatter(t, f, c="navy", s=0.05)
 
         # set xlims to the light curve
         ax.set_xlim(t.min(), t.max())
@@ -77,7 +85,7 @@ if __name__ == "__main__":
         # plot the flares
         for i, flare in flares.iterrows():
             if flare.t_peak_BJD - 2457000 > t.min() and flare.t_peak_BJD - 2457000 < t.max():
-                ax.axvline(flare.t_peak_BJD - 2457000, color="peru", lw=1.5, zorder=-1)
+                ax.axvline(flare.t_peak_BJD - 2457000, color="peru", lw=.5, zorder=-1)
 
 
         # highlight transits
@@ -94,11 +102,21 @@ if __name__ == "__main__":
 
         # loop over each two subsequent indices
         for s, f in zip(indices[::2], indices[1::2]):
-            ax.axvspan(tinterpolate[s], tinterpolate[f], color="steelblue", alpha=0.3)
+            ax.axvspan(tinterpolate[s], tinterpolate[f], color="#C2D6E7", zorder=-10)
 
             # highlight the best-fit elevated phase range
             midtransit = (tinterpolate[s] + tinterpolate[f]) / 2
-            ax.axvspan(midtransit, midtransit+0.2*6.9594, color="k", alpha=0.4, hatch="///", fill=False)
+            ax.axvspan(midtransit, midtransit+0.2*6.9594, color="grey",  hatch="///", fill=False, lw=0.5, zorder=-5)
+
+        # label each subplot with a letter AND the sector number
+        ax.text(0.0, 1.13, f"{labels.pop(0)}.", transform=ax.transAxes,
+                fontsize=8, ha="left", va="top", color="k", fontweight="bold")
+        
+        ax.set_ylim(33500, 37500)
+
+    # reduce the vertical offset between subplots in a column
+    fig.subplots_adjust(hspace=0.3, top=0.95, bottom=0.1, left=0.08, right=0.99)
+
 
     
     # last subplot xlabel
@@ -108,14 +126,24 @@ if __name__ == "__main__":
     for ax in axes:
         ax.set_ylabel(r"Flux [e$^{-}$/s]")
 
-    plt.tight_layout()
+    # change y-axis label to scientific notation
+    for ax in axes:
+        ax.ticklabel_format(style='sci', axis='y', scilimits=(0,0), useMathText=True)
+        ax.yaxis.get_offset_text().set_position((-0.05, 1.05))
+ 
+
+    # plt.tight_layout()
 
     plt.savefig("plots/paper/tess_lc.png", dpi=300)
+    plt.savefig("plots/paper/tess_lc.jpeg", dpi=300)
+
+    plt.savefig("../nature/final/figures/EDFIG1_tess_lc.eps", dpi=300)
+
 
 
     # PLOT ALL THE FLARES ---------------------------------------------------------------
 
-    fig = plt.figure(figsize=(9, 12))
+    fig = plt.figure(figsize=(183 * inch_mm, 210 * inch_mm), dpi=300)
     flataxes = []   
     w = 2
     h= 5
@@ -154,8 +182,8 @@ if __name__ == "__main__":
             sector = 64
 
         lc = pd.read_csv(f"results/tess/HIP67522_detrended_lc_{ind}_{sector}.csv")
-        ax2.scatter(lc.time, lc.flux, c="navy", s=0.2)
-        ax.scatter(lc.time, lc.masked_raw_flux, c="steelblue", s=0.2) 
+        ax2.scatter(lc.time, lc.flux, c="navy", s=0.1)
+        ax.scatter(lc.time, lc.masked_raw_flux, c="steelblue", s=0.1) 
         ax.plot(lc.time, lc.model, c="orange", lw=0.5) 
 
 
@@ -165,7 +193,7 @@ if __name__ == "__main__":
             transit_end = np.where(lc.transit_mask == 1)[0][-1]
 
             # highlight the transit region from edge to end
-            ax.axvspan(lc.time[transit_edge], lc.time[transit_end], color="steelblue", alpha=0.3)
+            ax.axvspan(lc.time[transit_edge], lc.time[transit_end], color="#C2D6E7",zorder=-10)
 
         # highlight the flare mask
         if (lc.flare_mask == 1).any():
@@ -173,7 +201,7 @@ if __name__ == "__main__":
             flare_end = np.where(lc.flare_mask == 1)[0][-1]
 
             # highlight the flare region from edge to end
-            ax.axvspan(lc.time[flare_edge], lc.time[flare_end], color="peru", alpha=0.3)
+            ax.axvspan(lc.time[flare_edge], lc.time[flare_end], color="#EAD1B3",zorder=-10)
 
         for a in [ax,ax2]:
             a.set_xlim(lc.time.min(), lc.time.max())
@@ -183,15 +211,22 @@ if __name__ == "__main__":
 
         # set x and y-ticks
         ax2.set_xticks(np.linspace(lc.time.min(), lc.time.max(), 5))
-        ax2.set_yticks(np.linspace(lc.flux.min()-150, lc.flux.max()+150, 3).round(decimals=-1))
+        ax2.set_yticks(np.linspace(lc.flux.min()-150, lc.flux.max()+150, 3).round(decimals=-2))
         ax2.set_ylim(lc.flux.min()-200, lc.flux.max()+200)
         ax.set_yticks(np.linspace(lc.masked_raw_flux.min()-200, lc.masked_raw_flux.max()+200, 3).round(decimals=-2))
         ax.set_ylim(lc.masked_raw_flux.min()-400, lc.masked_raw_flux.max()+400)
 
+        # get scientific notation for y-axis
+        ax.ticklabel_format(style='sci', axis='y', scilimits=(0,0), useMathText=True)
+        ax2.ticklabel_format(style='sci', axis='y', scilimits=(0,0), useMathText=True)
+        # force remove the y-axis offset
+        ax2.yaxis.get_offset_text().set_visible(False)
 
+        # set x-tick labels to .1 decimals
+        ax2.xaxis.set_major_formatter(plt.FuncFormatter(lambda x, _: f"{x:.1f}"))
 
         # enforce the +offset notation for the x-axis tick labels
-        ax2.get_xaxis().get_major_formatter().set_useOffset(lc.time.min().round())
+        # ax2.get_xaxis().get_major_formatter().set_useOffset(lc.time.min().round())
 
         if i == 16 or i == 17:
             ax2.set_xlabel("Time [BJD - 2457000]")
@@ -200,7 +235,10 @@ if __name__ == "__main__":
             ax.set_ylabel("Flux [e$^{-}$/s]")
             ax2.set_ylabel("Flux [e$^{-}$/s]")
 
+
     plt.savefig("plots/paper/tess_flares.png", dpi=300, bbox_inches="tight")
+    plt.savefig("plots/paper/tess_flares.jpeg", dpi=300, bbox_inches="tight")
+    plt.savefig("../nature/final/figures/EDFIG2_tess_flares.eps", dpi=300, bbox_inches="tight")
 
     # --------------------------------------------------------------------------------------------
     

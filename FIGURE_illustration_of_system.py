@@ -69,6 +69,11 @@ def integrate_field_line(x0, y0, z0, m, steps=1000, step_size=0.1):
 def sort_field_lines_by_z(field_lines):
     return sorted(field_lines, key=lambda line: np.mean(line[2]), reverse=True)
 
+# set font size to 6
+plt.rcParams.update({'font.size': 5})
+inch_mm = 0.03937008
+
+
 if __name__ == "__main__":
 
     # star, field lines, special field line, small sphere and rotation axis, footpoint, footpoint, background
@@ -86,7 +91,7 @@ if __name__ == "__main__":
     # Field lines are initialized at points on the surface of the main sphere.
     # Each starting point corresponds to a specific position on the sphere surface,
     # and the field lines are traced from these points using the integration function.
-    n_lines = 8
+    n_lines = 7
 
     # long and lat for magnetic field lines
     theta = np.linspace(0, 2 * np.pi, 5)
@@ -112,42 +117,42 @@ if __name__ == "__main__":
     field_lines = sort_field_lines_by_z(field_lines)
 
     # Position of the smaller sphere
-    small_sphere_center = (11.7, 1.35, 0.55)  # Closer to the equator of the main sphere
+    small_sphere_center = (10.9, 1.35, 0.55)  # Closer to the equator of the main sphere
     small_sphere_x, small_sphere_y, small_sphere_z = generate_sphere(radius=0.25, center=small_sphere_center)
 
     # Plotting
-    fig = plt.figure(figsize=(10, 6))
-    ax = fig.add_subplot(111, projection='3d')
+    fig = plt.figure(figsize=(89 * inch_mm, 89 * inch_mm * 0.7), dpi=300)
+    ax = fig.add_subplot(111, projection='3d',computed_zorder=False)
 
     # Plot the main sphere
-    ax.plot_surface(sphere_x, sphere_y, sphere_z, color=colors[0], alpha=1, edgecolor=colors[0], zorder=0)
+    ax.plot_surface(sphere_x, sphere_y, sphere_z, color=colors[0], alpha=1, edgecolor=colors[0], zorder=0, lw=0.5)
 
     # Plot the field lines
     for line in field_lines:
         x, y, z = line
-        ax.plot(x, y, z, color=colors[1], alpha=0.7, zorder=10, lw=1)
+        ax.plot(x, y, z, color=colors[1], alpha=0.7, zorder=10, lw=0.5)
 
         # if the line is close to the location of the smaller sphere, plot it in a different color
         if np.linalg.norm([x[len(x)//2], y[len(x)//2], z[len(x)//2]] - np.array(small_sphere_center)) < 4:
             cond = (z > 0.48) | ((x < 0.5) & (z > 0.5))
-            ax.plot(x[cond], y[cond], z[cond], color=colors[2], alpha=1, zorder=10, lw=0.8)
+            ax.plot(x[cond], y[cond], z[cond], color=colors[2], alpha=1, zorder=10, lw=0.5)
 
     # Plot the smaller sphere
-    ax.plot_surface(small_sphere_x, small_sphere_y, small_sphere_z, 
-                    color=colors[2], edgecolor=colors[3], alpha=1, zorder=30)
+    ax.plot_surface(small_sphere_x, small_sphere_y, small_sphere_z, lw=0.5,
+                    color="k", edgecolor="k", alpha=1, zorder=10)
 
     # add a line along the z-axis
-    ax.plot([0, 0], [0, 0], [-2, 2], color=colors[3], lw=.5)
+    # ax.plot([0, 0], [0, 0], [-2, 2], color=colors[3], lw=.5)
 
     # add an footpoint to 1,1,1
-    ax.scatter([1], [0.2], [.8], color=colors[4], marker='o', s=30, zorder=6)
-    ax.scatter([1], [0.2], [.8], color=colors[5], marker='o', s=10, zorder=6)
+    ax.scatter([1], [0.2], [.8], color=colors[4], marker='o', s=10, zorder=6)
+    ax.scatter([1], [0.2], [.8], color=colors[5], marker='o', s=5, zorder=6)
 
     # add a red line to the footpoint's positiion
     ax.plot([0, 1], [2, 0.2], [-8, 0.8], color=colors[5], lw=.5, zorder=6000)
 
     # add text "footpoint of interaction" to the start of the line
-    ax.text(0, 2, -8.6, "footpoint of interaction", color=colors[5], fontsize=10)
+    ax.text(0, 2, -8.6, "footpoint of interaction", color=colors[5])
 
     # plot a circle with radius 11 in the x-y plane
     theta = np.linspace(0, 2 * np.pi, 100)
@@ -169,17 +174,21 @@ if __name__ == "__main__":
     # y' = x * sin(40) + y * cos(40)
     x = x * np.cos(np.deg2rad(d2)) - y * np.sin(np.deg2rad(d2))
 
+    print(y)
+    x_mask = (y > -0.7) | (x> -2.5)
+    xm, ym, zm = x[x_mask], y[x_mask], z[x_mask]
+
     # plot the circle
-    ax.plot(x, y, z, color=colors[2], lw=.5, linestyle='dashed')
+    ax.scatter(xm, ym, zm, color=colors[2], zorder=20, s=0.2, marker="|")
 
     # annotate the small circle with a line that goes to the small sphere and a text that says HIP 67522 b
-    ax.text(9, -5.2, -.57, "HIP 67522 b", color=colors[5], fontsize=10)
+    ax.text(9.2, -5.2, -.52, "HIP 67522 b", color=colors[5], zorder=20)
 
     # line from (0,0,1) to (-1,-2,4)
     ax.plot([0, -1], [-0.1, -3], [1, 7], color=colors[5], lw=.5)
 
     # write HIP 67522 at the end of this line
-    ax.text(-1, -6.9, 7.1, "HIP 67522", color=colors[5], fontsize=10)
+    ax.text(-1, -6.9, 7.1, "HIP 67522", color=colors[5])
 
     # Axis settings
     r1 = 7
@@ -198,3 +207,5 @@ if __name__ == "__main__":
     ax.set_facecolor(colors[6])
 
     plt.savefig(f'plots/paper/dipole_field_lines_{suffix}.png', dpi=300, bbox_inches='tight')
+    plt.savefig(f'plots/paper/dipole_field_lines_{suffix}.pdf', dpi=300, bbox_inches='tight')
+    plt.savefig(f'../nature/final/figures/FIG1_dipole_field_lines_{suffix}.pdf', dpi=300, bbox_inches='tight')

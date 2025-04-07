@@ -18,7 +18,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 # set font size to 12
-plt.rcParams.update({'font.size': 11.5})
+plt.rcParams.update({'font.size': 6})
+inch_mm = 0.03937008
 
 if __name__ == "__main__":
 
@@ -85,11 +86,11 @@ if __name__ == "__main__":
 
     # PLOT THE BEST-FIT
 
-    fig, ax = plt.subplots(figsize=(6.5, 4.5))
+    fig, ax = plt.subplots(figsize=(89 * inch_mm, 89 * inch_mm * 0.7), dpi=300)
 
     # plot the observed flares as vertical lines at their respective phases
     for phase in phases:
-        ax.axvline(phase - 0.5, color='navy', alpha=0.7, lw=1, zorder=-500, linestyle=':')
+        ax.axvline(phase - 0.5, color='navy', alpha=0.7, lw=0.5, zorder=-500, linestyle=':')
 
 
     # sample from the modulated chain and plot a 100 models
@@ -100,46 +101,46 @@ if __name__ == "__main__":
         vals = [sample.phi0.values[0]-0.5, (sample.phi0.values[0] + sample.dphi.values[0])-0.5]
         
         ax.fill_between(x=vals, y1=4,
-                        color='steelblue', alpha=0.008, zorder=-1000)
+                        color='steelblue', alpha=0.0135, zorder=-1000)
         
         if vals[1] > 0.5:
             vals = [-.5, vals[1] - 1]
             ax.fill_between(x=vals, y1=4,
-                        color='steelblue', alpha=0.008, zorder=-1000)
+                        color='steelblue', alpha=0.0135, zorder=-1000)
         elif vals[0] < -0.5:
             vals = [vals[0] + 1, 0.5]
             ax.fill_between(x=vals, y1=4,
-                        color='steelblue', alpha=0.008, zorder=-1000)
+                        color='steelblue', alpha=0.0135, zorder=-1000)
         
             
     # plot the best fit model for the modulated model
     modmodel = modulated_model(binmids, bestfit.lambda0.values[1],
                             bestfit.lambda1.values[1], bestfit.phi0.values[1],
                             bestfit.dphi.values[1])
-    ax.step(binmids -0.5, y=modmodel, color='grey', lw=3.5, alpha=0.7)
-    ax.step(binmids -0.5, y=modmodel, color='navy', lw=2.5, alpha=0.7)
+    ax.step(binmids -0.5, y=modmodel, color='navy', lw=.5, alpha=1)
+    # ax.step(binmids -0.5, y=modmodel, color='navy', lw=.4, alpha=0.7)
 
 
     # plot the best fit model for the unmodulated model
     unmodmodel = bestfit.lambda0_unmod.values[1] * np.ones_like(binmids)
-    ax.step(binmids -0.5, y=unmodmodel , color='grey', lw=3.5, alpha=0.7)
-    ax.step(binmids -0.5, y=unmodmodel , color='peru', lw=2.5, alpha=0.7)
+    ax.step(binmids -0.5, y=unmodmodel , color='peru', lw=.5, alpha=1)
+    # ax.step(binmids -0.5, y=unmodmodel , color='peru', lw=.4, alpha=0.7)
 
     # add a cosine curve to show the phase of the planet
     x = np.linspace(-0.25, 0.25, 100)
     y = np.cos(2 * np.pi * x)**0.6 * 0.6 # the exponent is to convert to flare rate
 
-    ax.plot(x, y, c="k", zorder=-1, linestyle='-', lw=1.4, alpha=0.8)   
-    ax.plot(x, y, c="orange", zorder=0, linestyle='-', lw=1.1, alpha=0.8)   
-
+    ax.plot(x, y, c="navy", zorder=-1, linestyle='--', lw=.5, alpha=1)   
+    # ax.plot(x, y, c="orange", zorder=0, linestyle='-', lw=.4, alpha=0.8)   
+#
     # ADD PHASE COVERAGE ----------------------------------------------
     # add right axis with the visibility of the planet
     ax2 = plt.gca().twinx()
     ax2.set_ylabel("Phase coverage [d]")
 
     # plot histogram of observed phases
-    ax2.step(binmids -0.5, binned, color='k', lw=.8, label='phase coverage', 
-            linestyle='-', alpha=1)
+    ax2.step(binmids -0.5, binned, color='k', lw=.5, label='phase coverage', 
+            linestyle='-', alpha=1, zorder=-1)
 
     # LAYOUT ----------------------------------------------------------
     for a in [ax, ax2]:
@@ -153,8 +154,15 @@ if __name__ == "__main__":
 
 
     # put a text next to peru line saying unmodulated flare rate
-    ax.text(-0.48, 0.235, 'flare rate without interaction', color='k', fontsize=10.5)
-    ax.text(-0.48, 0.12, 'flare rate with interaction', color='k', fontsize=10.5)
+    # ax.text(-0.48, 0.235, 'flare rate without interaction', color='k', fontsize=5.5)
+    # ax.text(-0.48, 0.12, 'flare rate with interaction', color='k', fontsize=5.5)
+
+    # set a white box behind the two texts with alpha 0.2
+    ax.text(-0.48, 0.245, 'flare rate without interaction', color='k', fontsize=5, zorder=2,
+            bbox=dict(facecolor='white', alpha=0.8, edgecolor='none', boxstyle='round,pad=0.2'))
+    
+    ax.text(-0.48, 0.13, 'flare rate with interaction', color='k', fontsize=5, zorder=2,
+            bbox=dict(facecolor='white', alpha=0.8, edgecolor='none', boxstyle='round,pad=0.2'))
 
     # replace x-tick labels with -.5, -0.25, 0, 0.25, 0.5
     plt.xticks([-0.5, -0.25, 0, 0.25, 0.5], ['-0.5', '-0.25', '0', '0.25', '0.5'])
@@ -162,3 +170,5 @@ if __name__ == "__main__":
     # plt.legend(handles=handles, loc='upper right', frameon=False, fontsize=10)
     plt.tight_layout()
     plt.savefig('plots/paper/mcmc.png', dpi=300)
+    plt.savefig('plots/paper/mcmc.pdf', dpi=300)
+    plt.savefig('../nature/final/figures/FIG3_mcmc.pdf', dpi=300)

@@ -15,7 +15,8 @@ flux_label = r"Flux [e$^{-}$/s]"
 time_label = "Time [BJD]"
 
 # make font size larger
-plt.rcParams.update({'font.size': 12})
+plt.rcParams.update({'font.size': 5})
+inch_mm = 0.03937008
 
 
 if __name__ == "__main__":
@@ -55,11 +56,11 @@ if __name__ == "__main__":
 
     # ----------------------------------------------------------------------------------------------------------
 
-    fig = plt.figure(figsize=(17, 23))
+    fig = plt.figure(figsize=(183 * inch_mm, 230 * inch_mm))
     flataxes = []   
 
-    gs = fig.add_gridspec(7, 1, hspace=0.25, wspace=0.3, 
-                          top=0.98, bottom=0.03, left=0.06, right=0.99)
+    gs = fig.add_gridspec(7, 1, hspace=0.35, wspace=1.1, 
+                          top=0.98, bottom=0.04, left=0.07, right=0.99)
     gss = []
     for i in range(7):
         # add subgridspec with two rows and three columns
@@ -86,27 +87,53 @@ if __name__ == "__main__":
         ax1.set_xticklabels([])
         ax1.tick_params(axis='x', which='both', bottom=False, top=False)
         ax1.set_xlim(ax2.get_xlim())
+        ax2.yaxis.get_offset_text().set_visible(False)
+
+        # AXIS LAYOUT SHENANIGANS
+
+        mrf = dlcs[original_idx]["masked_raw_flux"]
+        # set yticks to round .2f numbers in the range mrf min to max
+        l = np.arange(round(int(mrf.min()), -4)+10000, int(mrf.max()), 10000)
+        if len(l)>4:
+            l = l[::2]
+        if len(l)>4:
+            l = l[::2]
+        ax1.set_yticks(l.round(decimals=-4))
+
+        modf = dlcs[original_idx]["flux"]
+        l = np.arange(round(int(modf.min()), -4), int(modf.max()), 5000)
+        if len(l)>4:
+            l = l[::2]
+        if len(l)>4:
+            l = l[::2]
+        if len(l)>4:
+            l = l[::2]
+        ax2.set_yticks(l.round(decimals=-3))
+
+        # ------------------------
 
         
-        flataxes[idup].scatter(dlcs[original_idx]["time"], dlcs[original_idx]["masked_raw_flux"] , s=1, color="steelblue", label="CHEOPS")
-        flataxes[idup].plot(dlcs[original_idx]["time"], dlcs[original_idx]["model"], color="orange", label="Model")
+        flataxes[idup].scatter(dlcs[original_idx]["time"], dlcs[original_idx]["masked_raw_flux"], 
+                               s=.05, color="steelblue", label="CHEOPS")
+        flataxes[idup].plot(dlcs[original_idx]["time"], dlcs[original_idx]["model"],
+                            color="orange", label="Model", lw=0.5)
 
         # mark transits with a grey axvspan if in the transit_mask range
         mask = np.where(dlcs[original_idx]["transit_mask"].values==True)[0]
         
         if len(mask) > 0:
             mintrans, maxtrans = dlcs[original_idx].iloc[mask[0]], dlcs[original_idx].iloc[mask[-1]]
-            flataxes[idup].axvspan(mintrans["time"], maxtrans["time"], color="steelblue", alpha=0.3, 
+            flataxes[idup].axvspan(mintrans["time"], maxtrans["time"], color="#C2D6E7",
                                    zorder=-10)
             # Plot the second "bottom" subplot (even rows in the new grid)
     
-        flataxes[iddown].scatter(dlcs[original_idx]["time"], dlcs[original_idx]["flux"], s=1, color="navy", label="CHEOPS")
+        flataxes[iddown].scatter(dlcs[original_idx]["time"], dlcs[original_idx]["flux"], s=.05, color="navy", label="CHEOPS")
         
     
         # Mark flares if they are within the time range of the current light curve
         for flare in flares[(flares["tmin"] > dlcs[original_idx]["time"].min()) & 
                             (flares["tmax"] < dlcs[original_idx]["time"].max())].iterrows():
-            flataxes[iddown].axvspan(flare[1]["tmin"], flare[1]["tmax"], color="peru", alpha=0.3, zorder=-10)
+            flataxes[iddown].axvspan(flare[1]["tmin"], flare[1]["tmax"], color="#EAD1B3", zorder=-10)
 
 
     # # only set y label for the first column
@@ -118,4 +145,7 @@ if __name__ == "__main__":
         ax.set_xlabel(time_label)
 
 
+
     plt.savefig("plots/paper/cheops_lc.png", dpi=300)
+    plt.savefig("plots/paper/cheops_lc.jpeg", dpi=300)
+    plt.savefig("../nature/final/figures/EDFIG3_cheops_lc.eps", dpi=300)
