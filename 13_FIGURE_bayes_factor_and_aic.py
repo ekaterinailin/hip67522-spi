@@ -43,11 +43,11 @@ if __name__ == "__main__":
     # MAKE A PLOT OF BOTH
     fig, (ax1, ax2) = plt.subplots(nrows=2, ncols=1, figsize=(89 *inch_mm, 89 * inch_mm * 0.7), sharex=True, dpi=300)
 
-    ax1.scatter(df['nbinedges'] - 1, df['K'], s=1, marker='x', color="navy")
+    ax1.scatter(df['nbinedges'] - 1, df['K'], s=1, marker='x', color="k")
     ax1.set_ylabel(r'$K$')
     ax1.set_ylim(0,19)
 
-    ax2.scatter(aics["nbinedges"] - 1, aics["deltaAIC"], s=1, marker='x', color="navy")
+    ax2.scatter(aics["nbinedges"] - 1, aics["deltaAIC"], s=1, marker='x', color="k")
     ax2.set_ylabel(r'$\Delta$ AIC')
     ax2.set_ylim(-12,0)
 

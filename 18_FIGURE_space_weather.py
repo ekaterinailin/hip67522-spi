@@ -97,17 +97,17 @@ if __name__ == "__main__":
     factors = np.logspace(-2, 0, 11)
     angles = np.linspace(0, 180, 100)
     colors = [
-    "#4682B4",  # 0%
-    "#507FB5",  # ~3.3%
-    "#5A7CB6",  # ~6.7%
-    "#6489B8",  # ~10%
-    "#6E96BA",  # ~13.3%
-    "#78A3BB",  # ~16.7%
-    "#82B0BD",  # ~20%
-    "#8CBCC0",  # ~23.3%
-    "#96C9C2",  # ~26.7%
-    "#A0D6C4"   # 30%
-]
+    "#4682b4",
+    "#4b86b6",
+    "#5189b8",
+    "#568dba",
+    "#5b90bd",
+    "#6094bf",
+    "#6697c1",
+    "#6b9bc3",
+    "#709fc5",
+    "#76a2c7"]
+
 
 
 
@@ -139,7 +139,7 @@ if __name__ == "__main__":
 
 
     # fill between 50 and 80 deg
-    plt.fill_between([50, 80], 0.01, 100, color="#BFBFE0", zorder=-2)
+    plt.fill_between([50, 80], 0.01, 100, color="#cccce6", zorder=-2)
     plt.text(56, 30, "solar\nCMEs", color="navy")
 
     # add horizontal line at unity

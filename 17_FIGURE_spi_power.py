@@ -559,7 +559,7 @@ if __name__ == "__main__":
     plt.ylabel("Power [erg/s]")
     plt.xlabel(r"Maximum planet-induced flare energy $E_{\rm max}$ [erg]")
     plt.xlim(Emaxs[0], Emaxs[-1])
-    plt.legend(loc=(0.3, 0.05), frameon=False, fontsize=5.2)  
+    plt.legend(loc=(0.308, 0.06), frameon=True, fontsize=5.2)  
     plt.tight_layout()
     plt.savefig("plots/paper/SPI_flux_vs_Emax.png", dpi=300)
     plt.savefig("plots/paper/SPI_flux_vs_Emax.pdf", dpi=300)
