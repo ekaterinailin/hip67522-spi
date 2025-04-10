@@ -149,7 +149,7 @@ if __name__ == "__main__":
     ax.scatter([1], [0.2], [.8], color=colors[5], marker='o', s=5, zorder=6)
 
     # add a red line to the footpoint's positiion
-    ax.plot([0, 1], [2, 0.2], [-8, 0.8], color=colors[5], lw=.5, zorder=6000)
+    ax.plot([0, 1], [2, 0.2], [-8, 0.8], color=colors[5], lw=.3, zorder=6000)
 
     # add text "footpoint of interaction" to the start of the line
     ax.text(0, 2, -8.6, "footpoint of interaction", color=colors[5])
@@ -174,7 +174,6 @@ if __name__ == "__main__":
     # y' = x * sin(40) + y * cos(40)
     x = x * np.cos(np.deg2rad(d2)) - y * np.sin(np.deg2rad(d2))
 
-    print(y)
     x_mask = (y > -0.7) | (x> -2.5)
     xm, ym, zm = x[x_mask], y[x_mask], z[x_mask]
 
@@ -185,7 +184,7 @@ if __name__ == "__main__":
     ax.text(9.2, -5.2, -.52, "HIP 67522 b", color=colors[5], zorder=20)
 
     # line from (0,0,1) to (-1,-2,4)
-    ax.plot([0, -1], [-0.1, -3], [1, 7], color=colors[5], lw=.5)
+    ax.plot([0, -1], [-0.1, -3], [1, 7], color=colors[5], lw=.3)
 
     # write HIP 67522 at the end of this line
     ax.text(-1, -6.9, 7.1, "HIP 67522", color=colors[5])

@@ -117,7 +117,7 @@ if __name__ == "__main__":
 
     for f in factors:
         if 0.08 < f < 0.13: # highlight the typical value
-            c="#EAD1B3"
+            c="peru"
             ml = get_mass_loss_rate(f, angles, *params).value / thao_dot_m
             plt.plot(angles, ml, label=f, c=c, lw=0.5)
 
